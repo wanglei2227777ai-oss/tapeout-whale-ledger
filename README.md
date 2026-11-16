@@ -101,7 +101,20 @@ Read-only. No wallet connection, no signing, no funds — ever.
 
 Key contracts (BSC): BEM token `0x5ce033b2bfca3af30b3e8c8457deaf776a8b695a` · claims/output contract `0x7e2e0dc66a3bd9103e69b766afa62d9f7b697b46` · signed-ask exchange `0x81de876ab97c65f156d896a24a76d48c015e6b6e`.
 
-The public deployment serves a thin proxy (`proxy/`) in front of the Firsto APIs — required because Firsto's CORS only allows its own domain — with per-IP rate limiting and the five case verdicts pre-cached so demo traffic never touches upstream quota.
+The public deployment serves a thin proxy (`proxy/`) in front of the Firsto APIs — required because Firsto's CORS only allows its own domain — with per-IP rate limiting and the six case verdicts pre-cached so demo traffic never touches upstream quota.
+
+```mermaid
+flowchart LR
+  U[Visitor browser] -->|same-origin /api/*| P[Vercel serverless proxy]
+  U -->|static| S[index.html + cases.json]
+  P -->|BSC| F1[Firsto TapeOut API]
+  P -->|X Layer| F2[Firsto X Layer API]
+  F1 --> C[(BSC chain data)]
+  F2 --> X[(X Layer chain data)]
+  SQD[SQD Portal mint scan] -.->|lifetime claims table, atomic swap| P
+```
+
+Methodology receipts — calibration, blind test, rule-fix log, golden set — are published in [`research/`](research/README.md).
 
 ## Known limitations
 
@@ -112,7 +125,16 @@ The public deployment serves a thin proxy (`proxy/`) in front of the Firsto APIs
 
 ## Deployment
 
-See [`proxy/README.md`](proxy/README.md) for the proxy skeleton and the environment variables to fill in (`ALLOWED_ORIGIN`, rate-limit and cache settings). Competition entry for **TapeOut Accelerate (X Layer Build X)**; submission deadline 2026-12-07 23:59 UTC.
+Production shape: this repository deploys as a single Vercel project — `index.html` and `cases.json` are served statically, `api/[...slug].js` is the serverless proxy, `vercel.json` sets its limits. Import the repo in Vercel and deploy; no build step, no environment variables required for the same-origin setup.
+
+Run the standalone proxy locally (Node ≥ 18, zero dependencies):
+
+```bash
+cd proxy && cp .env.example .env   # set ALLOWED_ORIGIN to your frontend origin
+npm start                          # listens on :8787
+```
+
+See [`proxy/README.md`](proxy/README.md) for the full variable list. Competition entry for **TapeOut Accelerate (X Layer Build X)**; submission deadline 2026-12-07 23:59 UTC.
 
 ## Disclaimer
 
