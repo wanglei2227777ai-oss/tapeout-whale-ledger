@@ -1322,9 +1322,16 @@ function loadSnapshot(chain){
 }
 async function fetchSnapshot(chain){
   const base = CH[chain].base;
-  let rows = [], scanned = 0, total = 0;
+  let rows = [], scanned = 0, total = 0, viewId = "";
   for(let p = 1; p <= 60; p++){
-    const j = await apiGet(base + "/v1/circuits?page=" + p);
+    let j = null;
+    for(let attempt = 0; attempt < 2 && !j; attempt++){
+      try{
+        j = await apiGet(base + "/v1/circuits?page=" + p + (viewId? "&viewId=" + encodeURIComponent(viewId) : ""), 15000);
+      }catch(e){ if(p === 1 && attempt === 1) throw e; }
+    }
+    if(!j) break; /* a later page failed twice: degrade to the partial snapshot */
+    if(j.viewId) viewId = j.viewId;
     if(j.total) total = j.total;
     const arr = Array.isArray(j.rows)? j.rows : [];
     scanned += arr.length;
@@ -1340,6 +1347,7 @@ async function fetchSnapshot(chain){
     const tp = j.totalPages || 0;
     if(!arr.length || (tp && p >= tp)) break;
   }
+  if(!scanned) throw new Error("empty snapshot");
   rows.sort((a, b)=>{ const l = a.cost * b.out, r = b.cost * a.out; return l < r? -1 : (l > r? 1 : 0); });
   let totalAsk = 0n;
   for(const r of rows) totalAsk += r.cost;
