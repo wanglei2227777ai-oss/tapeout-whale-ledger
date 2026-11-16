@@ -110,7 +110,25 @@ module.exports = async function handler(req, res) {
       sendJson(res, 429, { error: 'rate_limited', limit_per_min: RATE_LIMIT_PER_MIN });
       return;
     }
-    const url = `${UPSTREAMS[m[1]]}${m[2] || '/'}${search}`;
+    // Deep paths arrive via vercel.json rewrites (the platform routes this
+    // catch-all file for single segments only): /api/bsc?__p=v1/... — the
+    // real upstream path rides in __p; other query params pass through raw.
+    let upstreamPath = m[2] || '/';
+    let fwdSearch = search;
+    const rawParts = search.replace(/^\?/, '').split('&').filter(Boolean);
+    let pVal = null;
+    const keptParts = [];
+    for (const kv of rawParts) {
+      const eq = kv.indexOf('=');
+      const key = eq >= 0 ? kv.slice(0, eq) : kv;
+      if (key === '__p') pVal = eq >= 0 ? kv.slice(eq + 1) : '';
+      else keptParts.push(kv);
+    }
+    if (pVal !== null) {
+      upstreamPath = '/' + decodeURIComponent(pVal);
+      fwdSearch = keptParts.length ? '?' + keptParts.join('&') : '';
+    }
+    const url = `${UPSTREAMS[m[1]]}${upstreamPath}${fwdSearch}`;
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), UPSTREAM_TIMEOUT_MS);
     try {
@@ -124,7 +142,7 @@ module.exports = async function handler(req, res) {
       // let the CDN cache them briefly with stale-while-revalidate, so a
       // burst of simultaneous visitors coalesces into a trickle of upstream
       // requests instead of 60 pages per visitor.
-      const isCircuits = (m[2] || '').startsWith('/v1/circuits');
+      const isCircuits = upstreamPath.startsWith('/v1/circuits');
       res.writeHead(upstream.status, {
         'Content-Type': upstream.headers.get('content-type') || 'application/json; charset=utf-8',
         'Cache-Control': isCircuits
