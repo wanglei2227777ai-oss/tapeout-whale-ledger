@@ -118,11 +118,15 @@ module.exports = async function handler(req, res) {
     const rawParts = search.replace(/^\?/, '').split('&').filter(Boolean);
     let pVal = null;
     const keptParts = [];
+    // The platform's rewrite keeps the original path and appends routing
+    // artifacts to the query (__p, rest, ...slug). Firsto's paginated
+    // endpoints reject unknown params, so none of these may be forwarded.
+    const ARTIFACT_KEYS = new Set(['__p', 'rest', '...slug']);
     for (const kv of rawParts) {
       const eq = kv.indexOf('=');
       const key = eq >= 0 ? kv.slice(0, eq) : kv;
       if (key === '__p') pVal = eq >= 0 ? kv.slice(eq + 1) : '';
-      else keptParts.push(kv);
+      else if (!ARTIFACT_KEYS.has(key)) keptParts.push(kv);
     }
     if (pVal !== null) {
       // Vercel appends the original query string after the destination's,
@@ -152,8 +156,6 @@ module.exports = async function handler(req, res) {
       fwdSearch = qs ? '?' + qs : '';
     }
     const url = `${UPSTREAMS[m[1]]}${upstreamPath}${fwdSearch}`;
-    res.setHeader('x-debug-requrl', rawUrl);
-    res.setHeader('x-debug-upstream', url);
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), UPSTREAM_TIMEOUT_MS);
     try {
