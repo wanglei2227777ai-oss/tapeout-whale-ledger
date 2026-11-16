@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三账雷达 · TapeOut Whale Ledger</title>
+<meta name="description" content="One address in, three ledgers out. Machine ledger, component ledger, output & inventory ledger for any TapeOut wallet on BSC and X Layer. Read-only analytics.">
+<style>
+:root{
+  --bg:#0b0e13; --bg2:#10151d; --panel:#141a23; --panel2:#1a222e;
+  --line:#243040; --line2:#2e3d52;
+  --txt:#e9eef4; --mut:#8d9cae; --mut2:#647488;
+  --acc:#f5b942; --acc2:#ffb020;
+  --grn:#3fb97f; --red:#e5534b; --yel:#e3b341; --blu:#58a6ff;
+  --chip:#1d2735;
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:var(--blu);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1060px;margin:0 auto;padding:0 16px 64px}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:50;background:rgba(11,14,19,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.hd-in{max-width:1060px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.logo{font-size:19px;font-weight:800;letter-spacing:.2px}
+.logo .en{color:var(--acc);font-size:13px;font-weight:600;display:block;letter-spacing:.4px}
+.hd-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.health{display:flex;align-items:center;gap:7px;background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:12px;color:var(--mut)}
+.health .dot{width:8px;height:8px;border-radius:50%;background:var(--mut2);flex:none}
+.health.ok .dot{background:var(--grn);box-shadow:0 0 6px var(--grn)}
+.health.bad .dot{background:var(--red);box-shadow:0 0 6px var(--red)}
+.langbtn{background:var(--chip);border:1px solid var(--line2);color:var(--txt);border-radius:999px;padding:5px 13px;font-size:12.5px;font-weight:600}
+.langbtn:hover{border-color:var(--acc)}
+
+/* ---------- hero ---------- */
+.hero{padding:34px 0 8px}
+.hero h1{font-size:27px;line-height:1.25;font-weight:800}
+.hero h1 .hl{color:var(--acc)}
+.hero p.pitch{color:var(--mut);margin-top:10px;font-size:15.5px;max-width:760px}
+.vs-band{margin-top:20px;background:linear-gradient(135deg,#1a1410,#141a23 55%);border:1px solid #4a3a1c;border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.vs-side{flex:1;min-width:180px}
+.vs-side .cap{font-size:12px;color:var(--mut);letter-spacing:.6px}
+.vs-side .big{font-size:26px;font-weight:800;margin-top:2px}
+.vs-side .big.pos{color:var(--red)}
+.vs-side .big.neg{color:var(--grn)}
+.vs-arrow{font-size:22px;color:var(--acc);font-weight:800}
+.vs-note{width:100%;font-size:12.5px;color:var(--mut)}
+
+/* ---------- sections ---------- */
+section{margin-top:34px}
+.sec-t{font-size:19px;font-weight:800;display:flex;align-items:center;gap:9px}
+.sec-t::before{content:"";width:4px;height:19px;background:var(--acc);border-radius:2px}
+.sec-sub{color:var(--mut);font-size:13.5px;margin-top:5px;max-width:820px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-top:14px}
+.panel2{background:var(--panel2)}
+
+/* ---------- case chips ---------- */
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+.chipbtn{background:var(--chip);border:1px solid var(--line2);color:var(--txt);border-radius:12px;padding:9px 13px;text-align:left;min-width:140px;flex:1 1 150px}
+.chipbtn:hover{border-color:var(--acc)}
+.chipbtn.on{border-color:var(--acc);background:#241d10}
+.chipbtn .cl{font-size:13px;color:var(--mut)}
+.chipbtn .cv{font-size:15px;font-weight:700;margin-top:1px}
+.chipbtn .ca{font-size:11.5px;color:var(--mut2);font-family:ui-monospace,Menlo,monospace}
+.casecard h3{font-size:17px}
+.casecard .meta-line{color:var(--mut);font-size:12.5px;margin-top:2px}
+.tagrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.tag{background:#22314a;color:#a9c6f5;border:1px solid #2f4a73;border-radius:999px;padding:2px 9px;font-size:11.5px}
+.tag.warn{background:#3a2c14;color:#f0cd7e;border-color:#6b551f}
+.story{margin-top:11px;color:#cdd7e1;font-size:14.5px}
+table.kv{width:100%;border-collapse:collapse;margin-top:12px;font-size:13.5px}
+table.kv td,table.kv th{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+table.kv tr:last-child td{border-bottom:none}
+table.kv td.k{color:var(--mut);width:44%}
+table.kv td.v{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+table.kv td.note{color:var(--mut);font-weight:400;text-align:left;font-size:12.5px}
+.pos{color:var(--grn)} .neg{color:var(--red)} .zero{color:var(--mut)}
+
+/* ---------- lookup ---------- */
+.ctlrow{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.seg{display:flex;background:var(--chip);border:1px solid var(--line2);border-radius:11px;overflow:hidden}
+.seg button{background:transparent;border:none;color:var(--mut);padding:9px 16px;font-size:14px;font-weight:700}
+.seg button.on{background:var(--acc);color:#14100a}
+.addr-in{flex:1 1 260px;background:var(--bg2);border:1px solid var(--line2);border-radius:11px;color:var(--txt);padding:10px 13px;font-size:14px;font-family:ui-monospace,Menlo,monospace;min-width:0}
+.addr-in:focus{outline:none;border-color:var(--acc)}
+.goldbtn{background:var(--acc);border:none;color:#171106;font-weight:800;border-radius:11px;padding:10px 22px;font-size:15px}
+.goldbtn:hover{background:var(--acc2)}
+.goldbtn:disabled{opacity:.55;cursor:wait}
+.ghostbtn{background:transparent;border:1px solid var(--line2);color:var(--txt);border-radius:11px;padding:9px 15px;font-size:13.5px;font-weight:600}
+.ghostbtn:hover{border-color:var(--acc)}
+.progress{margin-top:11px;font-size:13px;color:var(--acc);min-height:19px}
+.errbox{margin-top:12px;border-radius:11px;padding:12px 14px;font-size:14px;display:none}
+.errbox.show{display:block}
+.errbox.src{background:#33191a;border:1px solid #6e2a2c;color:#f3b8b4}
+.errbox.nodata{background:#2b2413;border:1px solid #6b551f;color:#f0d9a0}
+.errbox.inval{background:#33191a;border:1px solid #6e2a2c;color:#f3b8b4}
+
+/* verdict card */
+.verdict-card{margin-top:16px;background:linear-gradient(150deg,#1b1408,#141a23 60%);border:1px solid #54451f;border-radius:var(--r);padding:18px}
+.verdict-card .vlab{font-size:12px;color:var(--mut);letter-spacing:1px}
+.verdict-card .vname{font-size:25px;font-weight:800;margin-top:3px}
+.verdict-card .vaddr{color:var(--mut);font-size:12.5px;margin-top:2px}
+.flipbadge{display:inline-block;margin-top:9px;background:#3a1530;border:1px solid #8a3370;color:#f2a9dd;border-radius:999px;padding:3px 11px;font-size:12.5px;font-weight:700}
+.degnote{margin-top:11px;background:#241a08;border:1px solid #6b551f;color:#f0d9a0;border-radius:10px;padding:10px 12px;font-size:13px}
+.pctl{margin-top:16px}
+.pctl .cap{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);flex-wrap:wrap;gap:4px}
+.pbar{position:relative;height:12px;background:linear-gradient(90deg,#274b73,#3d5a3a 45%,#6b551f 75%,#6e2a2c);border-radius:6px;margin-top:8px}
+.pmark{position:absolute;top:-4px;width:2px;height:20px;background:#cfd9e3;opacity:.75}
+.pmark span{position:absolute;top:21px;left:50%;transform:translateX(-50%);font-size:10.5px;color:var(--mut);white-space:nowrap}
+.pdot{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:var(--acc);border:3px solid #0b0e13;transform:translate(-50%,-50%);box-shadow:0 0 0 2px var(--acc)}
+.pval{position:absolute;top:-26px;transform:translateX(-50%);background:var(--acc);color:#171106;font-size:11.5px;font-weight:800;border-radius:6px;padding:1px 7px;white-space:nowrap}
+.factrow{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+.fact{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:9px 13px;min-width:104px;flex:1}
+.fact .fk{font-size:11.5px;color:var(--mut)}
+.fact .fv{font-size:16.5px;font-weight:800;margin-top:1px;font-variant-numeric:tabular-nums}
+.ledger-t{font-size:15px;font-weight:800;margin:18px 0 2px;color:var(--acc)}
+.footnote{font-size:12px;color:var(--mut2);margin-top:9px}
+.btnrow{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+
+/* ---------- simulator ---------- */
+.sim-grid{display:flex;gap:9px;flex-wrap:wrap;align-items:stretch}
+.sim-stat{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:10px 14px;flex:1;min-width:140px}
+.sim-stat .sk{font-size:11.5px;color:var(--mut)}
+.sim-stat .sv{font-size:18px;font-weight:800;margin-top:1px;font-variant-numeric:tabular-nums}
+.budget-in{width:150px;background:var(--bg2);border:1px solid var(--line2);border-radius:11px;color:var(--txt);padding:10px 13px;font-size:15px}
+.light{display:inline-flex;align-items:center;gap:8px;font-weight:700}
+.light .bulb{width:15px;height:15px;border-radius:50%;background:var(--mut2)}
+.light.g .bulb{background:var(--grn);box-shadow:0 0 9px var(--grn)}
+.light.y .bulb{background:var(--yel);box-shadow:0 0 9px var(--yel)}
+.light.r .bulb{background:var(--red);box-shadow:0 0 9px var(--red)}
+.exhaust{display:none;margin-top:13px;background:#33191a;border:1px solid #8a3438;color:#f6c1be;border-radius:11px;padding:12px 14px;font-size:14px;font-weight:600}
+.exhaust.show{display:block}
+
+/* ---------- health check ---------- */
+.hc-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px}
+@media(min-width:820px){.hc-grid{grid-template-columns:1fr 1fr}}
+.hc-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.hc-card h3{font-size:16px}
+.hc-card.clone{border-color:#5a2b2e}
+.hc-card ul{list-style:none;margin-top:9px}
+.hc-card li{padding:7px 0 7px 22px;position:relative;border-bottom:1px solid var(--line);font-size:13.5px;color:#cdd7e1}
+.hc-card li:last-child{border-bottom:none}
+.hc-card li::before{position:absolute;left:0;top:7px}
+.hc-card li.good::before{content:"✓";color:var(--grn);font-weight:800}
+.hc-card li.bad::before{content:"✕";color:var(--red);font-weight:800}
+.myth{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:13px 16px;margin-top:11px;font-size:14px}
+.myth .mq{color:var(--red);font-weight:700}
+.myth .ma{color:#cdd7e1;margin-top:3px}
+.closing{margin-top:16px;text-align:center;font-size:18px;font-weight:800;color:var(--acc);letter-spacing:.4px}
+.noadvice{text-align:center;color:var(--mut);font-size:12.5px;margin-top:5px}
+
+/* ---------- watchlist ---------- */
+.wl-item{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.wl-item:last-child{border-bottom:none}
+.wl-item .wa{font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.wl-item .wv{font-weight:700;font-size:13.5px}
+.wl-item .wt{color:var(--mut2);font-size:12px;margin-left:auto}
+.wl-item button{background:none;border:none;color:var(--mut);font-size:15px;padding:2px 6px}
+.wl-empty{color:var(--mut2);font-size:13.5px;padding:6px 0}
+
+/* ---------- footer ---------- */
+footer{margin-top:44px;border-top:1px solid var(--line);padding-top:18px;color:var(--mut);font-size:13px}
+footer h4{color:var(--txt);font-size:14px;margin:14px 0 5px}
+footer p{margin-top:5px;max-width:860px}
+.only-en{display:none}
+body[data-lang="en"] .only-en{display:block}
+body[data-lang="en"] .only-zh{display:none}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--line2);border-top-color:var(--acc);border-radius:50%;animation:sp 0.8s linear infinite;vertical-align:-2px;margin-right:7px}
+@keyframes sp{to{transform:rotate(360deg)}}
+canvas#shareCanvas{display:none}
+
+/* ---------- staged loader ---------- */
+.steps{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.step{flex:1 1 180px;display:flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:9px 12px;font-size:13.5px;color:var(--mut)}
+.step .sdot{width:23px;height:23px;flex:none;border-radius:50%;background:var(--chip);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--mut)}
+.step .ssub{display:block;font-size:11.5px;color:var(--mut2)}
+.step.active{border-color:var(--acc);color:var(--txt)}
+.step.active .sdot{background:var(--acc);color:#171106;border-color:var(--acc);animation:sp 1.4s linear infinite}
+.step.done{color:var(--mut)}
+.step.done .sdot{background:var(--grn);color:#08130d;border-color:var(--grn);animation:none}
+.step.fail .sdot{background:var(--red);color:#fff;border-color:var(--red);animation:none}
+.loadrow{color:var(--mut);font-size:13.5px;padding:8px 0}
+.secwarn{background:#2b2413;border:1px solid #6b551f;color:#f0d9a0;border-radius:10px;padding:11px 13px;font-size:13.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+.retrybtn{background:var(--acc);border:none;color:#171106;font-weight:800;border-radius:8px;padding:5px 14px;font-size:13px}
+.retrybtn:hover{background:var(--acc2)}
+.provbadge{display:inline-block;margin-left:9px;background:#3a2c14;border:1px solid #6b551f;color:#f0cd7e;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;vertical-align:middle}
+
+/* ---------- dual-chain strip ---------- */
+.strip{display:grid;grid-template-columns:1fr;gap:12px;margin-top:14px}
+@media(min-width:720px){.strip{grid-template-columns:1fr 1fr}}
+.strip-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:15px 16px}
+.strip-card h3{font-size:15.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.strip-card .srow{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+.strip-card .sstat{flex:1;min-width:110px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 11px}
+.strip-card .sstat .sk{font-size:11px;color:var(--mut)}
+.strip-card .sstat .sv{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.strip-card .sfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.strip-card .snote{font-size:11.5px;color:var(--mut2);width:100%}
+</style>
+</head>
+<body data-lang="zh">
+<header>
+  <div class="hd-in">
+    <div class="logo">三账雷达<span class="en">TAPEOUT WHALE LEDGER</span></div>
+    <div class="hd-right">
+      <div class="health" id="healthBadge"><span class="dot"></span><span id="healthText">…</span></div>
+      <button class="langbtn" id="langBtn">EN</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1 data-i18n="hero_h1">输入一个地址，<span class="hl">三本账</span>一次算清</h1>
+    <p class="pitch" data-i18n="hero_pitch">卖机排行榜只看一本账，所以它对榜上几乎每个人都判断错了。三账雷达把任意 TapeOut 钱包的机器账、元件账、产出/库存账全部对齐，再判定它到底是哪种玩家。BSC 与 X Layer 双链，只读、不连钱包。</p>
+    <div class="vs-band" id="vsBand" style="display:none">
+      <div class="vs-side">
+        <div class="cap" data-i18n="vs_left_cap">排行榜口径 · 只看机器账（案例钱包①）</div>
+        <div class="big pos num" id="vsLeft">—</div>
+      </div>
+      <div class="vs-arrow">→</div>
+      <div class="vs-side">
+        <div class="cap" data-i18n="vs_right_cap">三账口径 · 机器 − 元件 ＋ 领取</div>
+        <div class="big neg num" id="vsRight">—</div>
+      </div>
+      <div class="vs-note" data-i18n="vs_note">同一个钱包，两种读法。榜首「最能赚的人」，三账合一后是负数。</div>
+    </div>
+  </div>
+
+  <!-- CASES -->
+  <section id="casesSec">
+    <div class="sec-t" data-i18n="cases_t">六个案例 · 全史核实</div>
+    <p class="sec-sub" data-i18n="cases_sub">以下案例来自 184 个最大钱包、407,098 笔链上交易的全史逐笔重建，是静态研究结论（非实时查询）。点任意案例看它的三本账。</p>
+    <div class="chips" id="caseChips"></div>
+    <div id="caseCard"></div>
+  </section>
+
+  <!-- LOOKUP -->
+  <section id="lookupSec">
+    <div class="sec-t" data-i18n="lookup_t">任意地址查账</div>
+    <p class="sec-sub" data-i18n="lookup_sub">粘贴任意 BSC 或 X Layer 地址，实时拉取它的全部机器成交与元件成交，现场算三本账并给出判定。领取（产出）账依赖预计算表，实时模式下暂不可算、不会用估算充数。</p>
+    <div class="ctlrow">
+      <div class="seg" id="chainSeg">
+        <button data-chain="bsc" class="on">BSC · BEM</button>
+        <button data-chain="xl">X Layer · FAB</button>
+      </div>
+      <input class="addr-in" id="addrInput" placeholder="0x…" spellcheck="false" autocomplete="off">
+      <button class="goldbtn" id="lookupBtn" data-i18n="lookup_btn">查账</button>
+    </div>
+    <div class="progress" id="lookupProg"></div>
+    <div class="errbox" id="lookupErr"></div>
+    <div id="lookupResult"></div>
+  </section>
+
+  <!-- DUAL-CHAIN MARKET STRIP -->
+  <section id="stripSec">
+    <div class="sec-t" data-i18n="strip_t">双链市场速览</div>
+    <p class="sec-sub" data-i18n="strip_sub">两条链的实时快照速览（与模拟器共用同一份快照，不重复拉取）。点按钮把预设情景带进模拟器。</p>
+    <div class="strip">
+      <div class="strip-card" id="strip-bsc"></div>
+      <div class="strip-card" id="strip-xl"></div>
+    </div>
+  </section>
+
+  <!-- SIMULATOR -->
+  <section id="simSec">
+    <div class="sec-t" data-i18n="sim_t">市场与下单模拟器</div>
+    <p class="sec-sub" data-i18n="sim_sub">先看市场，再谈花钱。快照取真实挂单簿前 60 页，只收「挂单中＋已验证日产」的机器，按产能价（买一台 ÷ 每日产出）从便宜吃起。预算吃光整个快照时，它会明说，而不是编造成交。</p>
+    <div class="ctlrow">
+      <div class="seg" id="simChainSeg">
+        <button data-chain="bsc" class="on">BSC · BEM</button>
+        <button data-chain="xl">X Layer · FAB</button>
+      </div>
+      <button class="ghostbtn" id="simLoadBtn" data-i18n="sim_load">加载市场快照</button>
+      <span class="progress" id="simProg" style="margin-top:0;align-self:center"></span>
+    </div>
+    <div class="errbox" id="simErr"></div>
+    <div id="simBody" style="display:none">
+      <div class="sim-grid" style="margin-top:14px">
+        <div class="sim-stat"><div class="sk" data-i18n="sim_best">最优产能价</div><div class="sv num" id="simBest">—</div></div>
+        <div class="sim-stat"><div class="sk" data-i18n="sim_count">可买机器（已验证日产）</div><div class="sv num" id="simCount">—</div></div>
+        <div class="sim-stat"><div class="sk" data-i18n="sim_cov">快照覆盖（已扫行数 / 全场）</div><div class="sv num" id="simCov">—</div></div>
+        <div class="sim-stat"><div class="sk" data-i18n="sim_total">快照挂单总值</div><div class="sv num" id="simTotal">—</div></div>
+      </div>
+      <div class="ctlrow" style="align-items:center">
+        <input class="budget-in num" id="simBudget" type="text" inputmode="decimal" placeholder="100">
+        <span style="color:var(--mut);font-size:13.5px" id="simUnit">BNB</span>
+        <button class="goldbtn" id="simRunBtn" data-i18n="sim_run">模拟买入</button>
+        <span class="light" id="simLight" style="display:none"><span class="bulb"></span><span id="simLightTxt"></span></span>
+      </div>
+      <div class="exhaust" id="simExhaust"></div>
+      <div id="simResult"></div>
+    </div>
+  </section>
+
+  <!-- PROTOCOL HEALTH CHECK -->
+  <section id="hcSec">
+    <div class="sec-t" data-i18n="hc_t">协议体检：原版 vs 仿盘</div>
+    <p class="sec-sub" data-i18n="hc_sub">看一个协议的账，先看它的控制权结构。原版的优点和它自己的红线放在同一张表里；仿盘的问题全部来自链上实读。</p>
+
+    <div class="only-zh">
+      <div class="hc-grid">
+        <div class="hc-card">
+          <h3>原版 · TapeOut / BEM（BSC）— 优势</h3>
+          <ul>
+            <li class="good">挖矿合约已于 2026-09-14 封印；排放固定 7,200 BEM/天，减半路径已公布至 2030-08-19。</li>
+            <li class="good">真实、可测的经济体：21,081 台机器、总权重 1,650,392 H，主池流动性约 $151K（头部池合计约 $282K，2026-11-16）。</li>
+            <li class="good">铸造元件的协议费 50% 销毁，规则写在合约里。</li>
+            <li class="good">审计沿革存在：Salus 审计过 v2.0.0（报告 2026-10-28）。</li>
+            <li class="good">官方矿池一期已上线出产（约 173.6 BEM/天）；二期募集披露与链上实读一致（477 枚 NAND 对 477）。</li>
+            <li class="good">官方界面与合约中未发现推荐 / 多级返利机制。</li>
+          </ul>
+        </div>
+        <div class="hc-card">
+          <h3>原版 · BEM — 它自己的红线（不藏）</h3>
+          <ul>
+            <li class="bad">工厂合约仍可升级、由团队 3/5 多签持有——与白皮书「所有权完全放弃」的说法不符。</li>
+            <li class="bad">现行 v2.3.0 未经外部复审（Salus 只覆盖 v2.0.0，8 项发现为自称已修复、仍待确认）。</li>
+            <li class="bad">排放是通胀的：累计销毁 2,499.84 BEM，不足一周排放量的 5%，没有通缩对冲。</li>
+            <li class="bad">官方矿池注册矿工数仍为 0；币价波动极大（上次检查 30 天 −73.4%）。</li>
+            <li class="bad">团队匿名。</li>
+          </ul>
+        </div>
+        <div class="hc-card clone">
+          <h3>仿盘 · FabX / FAB（X Layer）— 结构病</h3>
+          <ul>
+            <li class="bad">约 87.3% 总供应在创世时预铸给部署者的个人地址（EOA），无锁仓。</li>
+            <li class="bad">挖矿合约可升级、未封印，owner 是个人私钥——规则可被单方随时更改。</li>
+            <li class="bad">无审计、无公布的减半表、团队匿名。</li>
+            <li class="bad">2026-10-13 才上线；7,006 台矿机 / 732 个持有人，厚度比原版低一个数量级，池流动性约 $131K。</li>
+          </ul>
+        </div>
+        <div class="hc-card">
+          <h3>三条误传更正</h3>
+          <ul>
+            <li class="bad">误传：「仿盘是官方 X Layer 版」——不是。社区仿盘，无官方背书。</li>
+            <li class="bad">误传：「原版合约全都改不了」——挖矿合约已封印，但工厂合约仍可升级（团队 3/5 多签）。</li>
+            <li class="bad">误传：「仿盘筹码分散、去中心化」——87.3% 的供应在一个部署者地址手里。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="only-en">
+      <div class="hc-grid">
+        <div class="hc-card">
+          <h3>Original · TapeOut / BEM (BSC) — strengths</h3>
+          <ul>
+            <li class="good">Mining contract sealed on 2026-09-14; emissions fixed at 7,200 BEM/day on a published halving path to 2030-08-19.</li>
+            <li class="good">A real, measurable economy: 21,081 circuits, 1,650,392 H total weight, main pool liquidity ≈ $151K (≈ $282K across the top pools, 2026-11-16).</li>
+            <li class="good">50% of the component-minting protocol fee is burned, enforced in the contract.</li>
+            <li class="good">Audit lineage exists: Salus audited v2.0.0 (report dated 2026-10-28).</li>
+            <li class="good">Official pool phase 1 is live and producing (≈ 173.6 BEM/day); phase-2 raise disclosures match on-chain reads exactly (477 NAND read vs 477 disclosed).</li>
+            <li class="good">No referral or multi-level rebate mechanism found anywhere in the official surfaces or contracts.</li>
+          </ul>
+        </div>
+        <div class="hc-card">
+          <h3>Original · BEM — its own red lines (stated, not hidden)</h3>
+          <ul>
+            <li class="bad">The factory contract is still upgradeable, held by a team 3/5 multisig — contradicting the whitepaper's "ownership fully renounced" framing.</li>
+            <li class="bad">The live v2.3.0 code has not been externally re-audited (Salus covered v2.0.0 only; the 8 findings are self-declared fixed, still pending).</li>
+            <li class="bad">Emissions are inflationary: cumulative burns (2,499.84 BEM) are under 5% of a single week's emissions — no deflationary offset.</li>
+            <li class="bad">The official pool still shows 0 registered miners; the token price is extremely volatile (−73.4% in 30 days at last check).</li>
+            <li class="bad">The team is anonymous.</li>
+          </ul>
+        </div>
+        <div class="hc-card clone">
+          <h3>Clone · FabX / FAB (X Layer) — structural flaws</h3>
+          <ul>
+            <li class="bad">≈ 87.3% of total supply pre-minted at genesis to the deployer's personal EOA, with no lock-up.</li>
+            <li class="bad">Mining contract upgradeable and unsealed, owned by a personal private key — the rules can change unilaterally at any time.</li>
+            <li class="bad">No audit, no published halving schedule, anonymous team.</li>
+            <li class="bad">Launched 2026-10-13; 7,006 miners / 732 holders — an order of magnitude thinner than the original; pool liquidity ≈ $131K.</li>
+          </ul>
+        </div>
+        <div class="hc-card">
+          <h3>Three myth corrections</h3>
+          <ul>
+            <li class="bad">Myth: "The clone is the official X Layer version." — It is not. A community clone with no official endorsement.</li>
+            <li class="bad">Myth: "The original's contracts can't be changed at all." — The mining contract is sealed, but the factory contract remains upgradeable (team 3/5 multisig).</li>
+            <li class="bad">Myth: "The clone's supply is distributed and decentralized." — 87.3% of supply sits in a single deployer address.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="closing" data-i18n="hc_close">看账，先看控制权在谁手里</div>
+    <div class="noadvice" data-i18n="hc_noadvice">本工具对两边都不给买入或卖出建议。</div>
+  </section>
+
+  <!-- WATCHLIST -->
+  <section id="wlSec">
+    <div class="sec-t" data-i18n="wl_t">自选盯防</div>
+    <p class="sec-sub" data-i18n="wl_sub">把查过的地址存进自选（只存本机浏览器）。下次再查同一地址，若判定类型变了，会亮出「类型翻转」标记。</p>
+    <div class="panel" id="wlPanel" style="margin-top:12px"></div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <h4 data-i18n="ft_m_t">方法论与可信度</h4>
+    <p data-i18n="ft_m">分类阈值在 n=108 个全史钱包的元件比值分布上校准（P25 −0.02 / P50 0.03 / P75 0.51），阈值落在数据空档里、不是凑整。样本外盲测：校准后以固定种子抽 15 个名单外钱包，名单先落盘后开跑——严格准确率 86.7%（13/15），毛额前 5 名 5/5。回归金标准集冻结 38 条标注地址（含 1 条跨链已知不符作负样本），任何规则改动必须先过全集。场外（OTC）转账对成交数据不可见，受影响的判定是下限值、界面会如实标注。</p>
+    <h4 data-i18n="ft_s_t">数据来源</h4>
+    <p data-i18n="ft_s">Firsto TapeOut 官方 API（BSC：api-tapeout.firsto.ai；X Layer：xlayer-api-tapeout.firsto.ai），经本站同源代理转发（上游 CORS 只放行其自有域名）。X Layer 接口不提供 creator 字段，自造比例轴在该链不可算，相关判定会降级标注。X Layer 金额闸门按参考汇率 1 BNB ≈ 6.91 OKB 换算（2026-11-16 实测）。</p>
+    <h4 data-i18n="ft_d_t">声明</h4>
+    <p data-i18n="ft_d">三账雷达是只读分析工具：不连接钱包、不签名、不碰资金。全部数字来自公开链上数据，仅供研究与教育，不构成投资建议。分类是对历史资金流模式的统计描述，不是身份认定、不是指控、不是预测。</p>
+    <p style="margin-top:14px">TapeOut Accelerate (X Layer Build X) · <a href="https://github.com/wanglei2227777ai-oss/tapeout-whale-ledger" target="_blank" rel="noopener">GitHub — tapeout-whale-ledger</a></p>
+  </footer>
+</div>
+
+<canvas id="shareCanvas" width="750" height="1040"></canvas>
+
+<script>
+"use strict";
+/* ============================== i18n ============================== */
+const VERDICTS = {
+  channel:   {zh:"出货通道型", en:"Distribution Channel"},
+  multiple:  {zh:"低成本倍数型", en:"Low-Cost Multiple"},
+  builder:   {zh:"造机周转型", en:"Builder-Rotator"},
+  holder:    {zh:"产出持有型", en:"Output Holder"},
+  stockpiler:{zh:"重资本囤料型", en:"Capital-Heavy Stockpiler"},
+  regular:   {zh:"普通交易型", en:"Regular Trader"},
+  regular_deg:{zh:"普通交易型（降级判定）", en:"Regular Trader (degraded verdict)"},
+  srcdist:   {zh:"源头分发（流量签名）", en:"Source Distribution (flow signature)"}
+};
+const CASE_VERDICT_KEY = {
+  "造机周转型":"builder","低成本倍数型":"multiple","产出持有型":"holder",
+  "出货通道型":"channel","重资本囤料型":"stockpiler","普通交易型（降级判定）":"regular_deg"
+};
+const I18N = {
+zh:{
+  hero_h1:'输入一个地址，<span class="hl">三本账</span>一次算清',
+  hero_pitch:"卖机排行榜只看一本账，所以它对榜上几乎每个人都判断错了。三账雷达把任意 TapeOut 钱包的机器账、元件账、产出/库存账全部对齐，再判定它到底是哪种玩家。BSC 与 X Layer 双链，只读、不连钱包。",
+  vs_left_cap:"排行榜口径 · 只看机器账（案例钱包①）",
+  vs_right_cap:"三账口径 · 机器 − 元件 ＋ 领取",
+  vs_note:"同一个钱包，两种读法。榜首「最能赚的人」，三账合一后是负数。",
+  cases_t:"六个案例 · 全史核实",
+  cases_sub:"以下案例来自 184 个最大钱包、407,098 笔链上交易的全史逐笔重建，是静态研究结论（非实时查询）。点任意案例看它的三本账。",
+  cases_static:"全史核实（静态）",
+  lookup_t:"任意地址查账",
+  lookup_sub:"粘贴任意 BSC 或 X Layer 地址，实时拉取它的全部机器成交与元件成交，现场算三本账并给出判定。领取（产出）账依赖预计算表，实时模式下暂不可算、不会用估算充数。",
+  lookup_btn:"查账",
+  sim_t:"市场与下单模拟器",
+  sim_sub:"先看市场，再谈花钱。快照取真实挂单簿前 60 页，只收「挂单中＋已验证日产」的机器，按产能价（买一台 ÷ 每日产出）从便宜吃起。预算吃光整个快照时，它会明说，而不是编造成交。",
+  sim_load:"加载市场快照",
+  sim_best:"最优产能价", sim_count:"可买机器（已验证日产）", sim_cov:"快照覆盖（已扫行数 / 全场）", sim_total:"快照挂单总值",
+  sim_run:"模拟买入",
+  hc_t:"协议体检：原版 vs 仿盘",
+  hc_sub:"看一个协议的账，先看它的控制权结构。原版的优点和它自己的红线放在同一张表里；仿盘的问题全部来自链上实读。",
+  hc_close:"看账，先看控制权在谁手里",
+  hc_noadvice:"本工具对两边都不给买入或卖出建议。",
+  wl_t:"自选盯防",
+  wl_sub:"把查过的地址存进自选（只存本机浏览器）。下次再查同一地址，若判定类型变了，会亮出「类型翻转」标记。",
+  wl_empty:"自选为空。查账后点「加入自选」即可添加。",
+  ft_m_t:"方法论与可信度",
+  ft_m:"分类阈值在 n=108 个全史钱包的元件比值分布上校准（P25 −0.02 / P50 0.03 / P75 0.51），阈值落在数据空档里、不是凑整。样本外盲测：校准后以固定种子抽 15 个名单外钱包，名单先落盘后开跑——严格准确率 86.7%（13/15），毛额前 5 名 5/5。回归金标准集冻结 38 条标注地址（含 1 条跨链已知不符作负样本），任何规则改动必须先过全集。场外（OTC）转账对成交数据不可见，受影响的判定是下限值、界面会如实标注。",
+  ft_s_t:"数据来源",
+  ft_s:"Firsto TapeOut 官方 API（BSC：api-tapeout.firsto.ai；X Layer：xlayer-api-tapeout.firsto.ai），经本站同源代理转发（上游 CORS 只放行其自有域名）。X Layer 接口不提供 creator 字段，自造比例轴在该链不可算，相关判定会降级标注。X Layer 金额闸门按参考汇率 1 BNB ≈ 6.91 OKB 换算（2026-11-16 实测）。",
+  ft_d_t:"声明",
+  ft_d:"三账雷达是只读分析工具：不连接钱包、不签名、不碰资金。全部数字来自公开链上数据，仅供研究与教育，不构成投资建议。分类是对历史资金流模式的统计描述，不是身份认定、不是指控、不是预测。",
+  health_ok:"数据源正常", health_bad:"数据源异常", health_last:"最近成功",
+  verdict_lab:"玩家类型判定",
+  parallel_lab:"并行标签",
+  m_ledger:"机器账 · Machine Ledger", c_ledger:"元件账 · Component Ledger", o_ledger:"产出/库存账 · Output & Inventory Ledger",
+  r_buy_cost:"买入成本", r_sell_gross:"卖出毛额", r_machine_net:"机器净额（已实现）", r_held:"当前持机", r_mktval:"持机市值",
+  r_comp_buy:"买入毛额", r_comp_sell:"卖出毛额", r_comp_net:"净投入", r_comp_buyn:"买入笔数", r_comp_selln:"卖出笔数",
+  r_inv_count:"元件库存", r_soft:"库存软估值（折价后）", r_claims:"累计领取（产出账）",
+  claims_na:"暂不可算（待预计算）",
+  f_bought:"买入机器", f_sold:"卖出机器", f_self:"自造比例", f_sellrate:"卖出率", f_gross:"元件毛比值", f_net:"元件净比值",
+  pctl_cap:"元件净比值在校准样本（n=108）中的位置",
+  add_wl:"加入自选", share_btn:"生成战报卡片",
+  flip:"类型翻转",
+  deg_note_h:"降级判定说明：",
+  deg_note:"自造比例轴在 X Layer 不可算（接口无 creator 字段）。造机周转型其余闸门状态：",
+  deg_gross:"元件毛比值 ≥ 0.60", deg_sold:"卖出 ≥ 50 台",
+  deg_up:"——两闸皆过：若自造比例可验证且 ≥ 0.50，本判定即升级为造机周转型。",
+  deg_notup:"——未全过：即使自造比例可算，也不满足造机周转型的全部闸门。",
+  pass:"过", fail:"未过", na:"不可算",
+  capped_note:"注意：成交拉取达到 60 页上限，以下计数为下限值。",
+  r_note_global:"折价系数 D 按全球市场最近 24h 成交额计算 r（库存市值 ÷ 24h 成交额）。",
+  r_note_snap:"折价系数 D 按快照深度口径计算 r（库存市值 ÷ 快照挂单总值）——全球 24h 成交暂不可得。",
+  r_note_none:"折价系数暂不可算（市场深度数据不可得），软估值按未折价市值显示并标注。",
+  prog_summary:"正在拉取账户概要…", prog_m:"正在拉取机器成交", prog_c:"正在拉取元件成交", prog_p:"正在拉取持仓与市场深度…", prog_done:"完成",
+  page_unit:"页", trade_unit:"笔",
+  err_src:"数据源不可用：代理或上游接口暂时无响应，请稍后重试。已保留上次成功状态（见右上角健康标记）。",
+  err_nodata:"该地址暂无数据：在这条链上没有找到它的机器/元件成交记录。请确认链选对了、地址无误。",
+  err_addr:"地址格式不对：应为 0x 开头的 40 位十六进制地址。",
+  err_cases:"案例数据加载失败，请刷新页面重试。",
+  sim_loading:"正在拉取挂单簿快照", sim_loaded:"快照已加载（5 分钟内复用）",
+  sim_machines:"吃下机器", sim_spent:"总花费", sim_daily:"合计日产", sim_blend:"混合产能价", sim_payback:"静态回本",
+  sim_days:"天", sim_per_day:"BEM/天",
+  light_g:"绿灯：回本 < 300 天且预算 ≤ 快照总值 20%",
+  light_y:"黄灯：回本 < 450 天且预算 ≤ 快照总值 50%",
+  light_r:"红灯：回本过长或预算占快照过深",
+  light_na:"X Layer 暂无价格源，回本与灯号不可算",
+  exhaust_h:"快照深度耗尽",
+  rate_note:"参考汇率 1 BNB ≈ 6.91 OKB（2026-11-16 实测），仅用于判定闸门换算，金额仍按 OKB 原生显示。",
+  case_rows:{machine_net_bnb:"机器账净额",element_net_in_bnb:"元件净投入",visible_total_bnb:"三账可见合计",total_incl_claims_bnb:"三账合计（含领取）",claims_bem:"终身领取 BEM",claims_value_bnb_at_period_avg:"领取估值（期间均价）",audit_range_bnb:"审计区间",combined_sell_gross_bnb:"两钱包卖出毛额合计",visible_total_note:"说明",inventory_soft_value_bnb:"库存软估值（未实现）",inventory_note:"库存说明",machine_net_okb:"机器账净额",element_net_in_okb:"元件净投入",visible_total_okb:"三账可见合计（软估）",leaderboard_view:"排行榜口径"},
+  fact_rows:{machines_bought:"买入机器",machines_sold:"卖出机器",machines_held:"当前持机",selfbuild_ratio:"自造比例",element_gross_ratio:"元件毛比值",element_net_ratio:"元件净比值",sell_rate:"卖出率",early_nand_avg_price_bnb:"创世期 NAND 均价",machine_to_element_multiple:"机器净利 / 元件投入",daily_output_bem:"日产（BEM）",element_buy_share:"元件买入占比",fab_balance:"FAB 余额",inventory_value_okb:"持仓市值",sell_gross_bnb:"卖出毛额"},
+  units:{tai:" 台", bem:" BEM", bnb:" BNB", okb:" OKB"},
+  share_title:"三账雷达 · 战报", share_addr:"地址尾号", share_date:"日期",
+  step1:"正在拉取机器账", step2:"正在翻页核算元件账", step3:"正在合成三账裁决",
+  busy:"数据源繁忙，点击重试", retry_btn:"重试", sec_loading:"正在拉取…",
+  prov_badge:"暂定判定 · 待元件账",
+  wait_m:"机器账未到，暂无法判定。", synth:"正在合成裁决…",
+  strip_t:"双链市场速览",
+  strip_sub:"两条链的实时快照速览（与模拟器共用同一份快照，不重复拉取）。点按钮把预设情景带进模拟器。",
+  strip_preset:"预设情景预算", strip_open:"带进模拟器",
+  strip_loading:"正在加载快照…", strip_fail:"快照加载失败，可在下方模拟器重试",
+  xl_light_note:"XL 无价格源，灯号仅按预算占快照深度计算",
+  shareof:"占快照深度",
+  exhaust_msg:"预算超过快照全部挂单总值 {X}，以下为部分成交：吃光 {N} 台、实花 {Y}，超出部分无单可吃。"
+},
+en:{
+  hero_h1:'One address in, <span class="hl">three ledgers</span> out',
+  hero_pitch:"The machine-sales leaderboard reads only one ledger, so it is wrong about almost everyone on it. Whale Ledger reconciles any TapeOut wallet's machine ledger, component ledger and output & inventory ledger, then classifies the player behind it. BSC + X Layer, read-only, no wallet connection.",
+  vs_left_cap:"Leaderboard view · machine ledger only (Case Wallet ①)",
+  vs_right_cap:"Three-ledger view · machines − components + claims",
+  vs_note:"Same wallet, two readings. The leaderboard's #1 'earner' is negative once all three ledgers are counted.",
+  cases_t:"Six cases · full-history verified",
+  cases_sub:"Rebuilt trade-by-trade from the complete on-chain history of the 184 largest wallets (407,098 transactions). These are static research verdicts, not live queries. Tap any case to see its three ledgers.",
+  cases_static:"Full-history verified (static)",
+  lookup_t:"Look up any address",
+  lookup_sub:"Paste any BSC or X Layer address to pull its full machine and component trade history live and compute the three ledgers on the spot. Lifetime claims depend on a precompute table and are shown as not-yet-computable in live mode — never estimated.",
+  lookup_btn:"Look up",
+  sim_t:"Market & buy simulator",
+  sim_sub:"Read the market before spending anything. The snapshot walks the real ask book (first 60 pages), keeps only open asks on verified-output machines, and eats cheapest capacity first. If your budget eats the entire snapshot, it says so instead of fabricating fills.",
+  sim_load:"Load market snapshot",
+  sim_best:"Best capacity price", sim_count:"Buyable machines (verified output)", sim_cov:"Snapshot coverage (rows scanned / market total)", sim_total:"Snapshot total ask value",
+  sim_run:"Simulate buy",
+  hc_t:"Protocol Health Check: Original vs Clone",
+  hc_sub:"Before reading a protocol's numbers, read its control structure. The original's strengths and its own red lines sit in the same table; every clone flaw below was verified on-chain.",
+  hc_close:"Follow the ledger: first ask who holds control.",
+  hc_noadvice:"This tool gives no buy or sell advice for either side.",
+  wl_t:"Watchlist",
+  wl_sub:"Save looked-up addresses to a watchlist (stored only in this browser). Re-query an address and, if its verdict changed, a verdict-flip badge lights up.",
+  wl_empty:"Watchlist is empty. Run a lookup and tap “Add to watchlist”.",
+  ft_m_t:"Methodology & credibility",
+  ft_m:"Classifier thresholds were calibrated on the component-ratio distribution of n=108 full-history wallets (P25 −0.02 / P50 0.03 / P75 0.51), placed in data gaps rather than on round numbers. Out-of-sample blind test: 15 off-list wallets drawn with a fixed seed after calibration, list frozen before the run — strict accuracy 86.7% (13/15), top-5 by gross 5/5. A golden regression set of 38 labeled addresses (including one known cross-chain miss kept as a negative sample) is frozen; every rule change must pass the full set first. Off-market (OTC) transfers are invisible to trade data — affected verdicts are floors and are labeled as such.",
+  ft_s_t:"Data sources",
+  ft_s:"Firsto TapeOut official APIs (BSC: api-tapeout.firsto.ai; X Layer: xlayer-api-tapeout.firsto.ai), forwarded through this site's same-origin proxy (upstream CORS only allows its own domain). The X Layer API exposes no creator field, so the self-build axis is not computable there and affected verdicts are marked degraded. X Layer money gates are converted at the reference rate 1 BNB ≈ 6.91 OKB (measured 2026-11-16).",
+  ft_d_t:"Disclaimer",
+  ft_d:"Whale Ledger is a read-only analytics tool: no wallet connection, no signing, no custody of funds — ever. All figures derive from public on-chain data, for research and education only; nothing here is investment advice. Classifications are statistical descriptions of historical flow patterns — not identities, not accusations, not predictions.",
+  health_ok:"Data source OK", health_bad:"Data source error", health_last:"last success",
+  verdict_lab:"PLAYER VERDICT",
+  parallel_lab:"Parallel labels",
+  m_ledger:"Machine Ledger", c_ledger:"Component Ledger", o_ledger:"Output & Inventory Ledger",
+  r_buy_cost:"Buy cost", r_sell_gross:"Sell proceeds (gross)", r_machine_net:"Machine net (realized)", r_held:"Machines held", r_mktval:"Held market value",
+  r_comp_buy:"Gross buy", r_comp_sell:"Gross sell", r_comp_net:"Net input", r_comp_buyn:"Buy trades", r_comp_selln:"Sell trades",
+  r_inv_count:"Component inventory", r_soft:"Inventory soft value (discounted)", r_claims:"Lifetime claims (output ledger)",
+  claims_na:"Not yet computable (precompute pending)",
+  f_bought:"Bought", f_sold:"Sold", f_self:"Self-build ratio", f_sellrate:"Sell rate", f_gross:"Gross ratio", f_net:"Net ratio",
+  pctl_cap:"Net ratio position in the calibration sample (n=108)",
+  add_wl:"Add to watchlist", share_btn:"Share card (PNG)",
+  flip:"Verdict flip",
+  deg_note_h:"Degraded verdict: ",
+  deg_note:"The self-build axis is not computable on X Layer (the API exposes no creator field). Remaining Builder-Rotator gates: ",
+  deg_gross:"gross ratio ≥ 0.60", deg_sold:"sold ≥ 50",
+  deg_up:" — both pass: if the self-build ratio could be verified at ≥ 0.50, this verdict upgrades to Builder-Rotator.",
+  deg_notup:" — not all pass: even with the self-build axis, the Builder-Rotator gates are not all met.",
+  pass:"pass", fail:"fail", na:"n/a",
+  capped_note:"Note: the trade pull hit the 60-page cap; counts below are lower bounds.",
+  r_note_global:"Discount factor D uses r = inventory value ÷ global market volume of the last 24h.",
+  r_note_snap:"Discount factor D uses the snapshot-depth caliber for r (inventory value ÷ snapshot total ask value) — global 24h volume unavailable.",
+  r_note_none:"Discount factor not computable (no market-depth data); soft value shown undiscounted and labeled.",
+  prog_summary:"Fetching account summary…", prog_m:"Fetching machine trades", prog_c:"Fetching component trades", prog_p:"Fetching portfolio & market depth…", prog_done:"Done",
+  page_unit:" pages", trade_unit:" trades",
+  err_src:"Data source unavailable: the proxy or upstream API did not respond. Please retry shortly. The last good state is kept (see the health badge, top right).",
+  err_nodata:"No data for this address: no machine or component trades found on this chain. Check that the chain and address are correct.",
+  err_addr:"Invalid address: expected a 0x-prefixed 40-hex-character address.",
+  err_cases:"Failed to load case data. Please refresh and retry.",
+  sim_loading:"Loading ask-book snapshot", sim_loaded:"Snapshot loaded (reused for 5 min)",
+  sim_machines:"Machines eaten", sim_spent:"Total spent", sim_daily:"Total daily output", sim_blend:"Blended capacity price", sim_payback:"Static payback",
+  sim_days:" days", sim_per_day:" BEM/day",
+  light_g:"Green: payback < 300d and budget ≤ 20% of snapshot value",
+  light_y:"Yellow: payback < 450d and budget ≤ 50% of snapshot value",
+  light_r:"Red: payback too long or budget too deep into the book",
+  light_na:"No price feed on X Layer — payback and light not computable",
+  exhaust_h:"Snapshot depth exhausted",
+  rate_note:"Reference rate 1 BNB ≈ 6.91 OKB (measured 2026-11-16), used only for verdict-gate conversion; amounts are displayed natively in OKB.",
+  case_rows:{machine_net_bnb:"Machine ledger net",element_net_in_bnb:"Component net input",visible_total_bnb:"Three-ledger visible total",total_incl_claims_bnb:"Three-ledger total (incl. claims)",claims_bem:"Lifetime claims (BEM)",claims_value_bnb_at_period_avg:"Claims value (period avg price)",audit_range_bnb:"Audit interval",combined_sell_gross_bnb:"Combined sell gross (2 wallets)",visible_total_note:"Note",inventory_soft_value_bnb:"Inventory soft value (unrealized)",inventory_note:"Inventory note",machine_net_okb:"Machine ledger net",element_net_in_okb:"Component net input",visible_total_okb:"Three-ledger visible total (soft)",leaderboard_view:"Leaderboard view"},
+  fact_rows:{machines_bought:"Machines bought",machines_sold:"Machines sold",machines_held:"Machines held",selfbuild_ratio:"Self-build ratio",element_gross_ratio:"Component gross ratio",element_net_ratio:"Component net ratio",sell_rate:"Sell rate",early_nand_avg_price_bnb:"Genesis NAND avg price",machine_to_element_multiple:"Machine net / component input",daily_output_bem:"Daily output (BEM)",element_buy_share:"Component buy share",fab_balance:"FAB balance",inventory_value_okb:"Inventory value",sell_gross_bnb:"Sell gross"},
+  units:{tai:"", bem:" BEM", bnb:" BNB", okb:" OKB"},
+  share_title:"Whale Ledger · Verdict", share_addr:"Address tail", share_date:"Date",
+  step1:"Fetching the machine ledger", step2:"Paging through the component ledger", step3:"Composing the three-ledger verdict",
+  busy:"Data source busy — tap to retry", retry_btn:"Retry", sec_loading:"Loading…",
+  prov_badge:"Provisional verdict · component ledger pending",
+  wait_m:"Machine ledger unavailable — no verdict yet.", synth:"Composing verdict…",
+  strip_t:"Both markets at a glance",
+  strip_sub:"Live snapshot cards for both chains (shared with the simulator — fetched once, never duplicated). Tap a button to load the preset scenario into the simulator.",
+  strip_preset:"Preset budget", strip_open:"Open in simulator",
+  strip_loading:"Loading snapshot…", strip_fail:"Snapshot failed to load — retry from the simulator below",
+  xl_light_note:"No XL price feed — light reflects budget share of snapshot depth only",
+  shareof:"of snapshot depth",
+  exhaust_msg:"Budget exceeds the snapshot's total ask value {X}. Partial fill below: all {N} machines eaten for {Y}; the remainder has no asks to fill."
+}};
+let LANG = "zh";
+function t(k){ const d=I18N[LANG]; return (d && d[k]!==undefined)? d[k] : (I18N.zh[k]||k); }
+function verdictName(key){ const v=VERDICTS[key]; return v? v[LANG] : key; }
+</script>
+
+<script>
+"use strict";
+/* ============================== utils ============================== */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const W18 = 10n ** 18n;
+const OKB_PER_BNB = 6.91; // fixed reference rate, measured 2026-11-16
+
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function sepInt(s){ return s.replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+/* BigInt wei (1e18) -> display string, dp decimals, thousands separators, sign-aware */
+function fmtWei(wei, dp){
+  dp = (dp===undefined)? 2 : dp;
+  let v; try{ v = BigInt(wei); }catch(e){ return "—"; }
+  const neg = v < 0n; if(neg) v = -v;
+  const intPart = v / W18; let frac = (v % W18).toString().padStart(18,"0");
+  frac = frac.slice(0, Math.max(dp,0));
+  // round half up on the next digit
+  const nextDigit = (v % W18).toString().padStart(18,"0").charAt(Math.max(dp,0));
+  let out = sepInt(intPart.toString());
+  if(dp>0){
+    let f = frac.padEnd(dp,"0");
+    if(nextDigit && nextDigit >= "5"){
+      let fv = BigInt(f||"0") + 1n;
+      if(fv >= 10n ** BigInt(dp)){ out = sepInt((intPart + 1n).toString()); f = "0".repeat(dp); }
+      else f = fv.toString().padStart(dp,"0");
+    }
+    out += "." + f;
+  } else if(nextDigit && nextDigit >= "5"){ out = sepInt((intPart + 1n).toString()); }
+  return (neg? "−":"") + out;
+}
+/* wei ratio a/b as Number (4dp), null if b==0 */
+function ratioNum(aWei, bWei){
+  try{
+    const a = BigInt(aWei), b = BigInt(bWei);
+    if(b === 0n) return null;
+    const scaled = (a * 1000000n) / b; // may truncate toward zero; fine for display ratios
+    return Number(scaled) / 1000000;
+  }catch(e){ return null; }
+}
+function fmtNum(n, dp){
+  if(n===null || n===undefined || !isFinite(n)) return "—";
+  dp = (dp===undefined)? 2 : dp;
+  const neg = n < 0; const a = Math.abs(n);
+  const parts = a.toFixed(dp).split(".");
+  return (neg? "−":"") + sepInt(parts[0]) + (parts[1]? "."+parts[1] : "");
+}
+function fmtSignedWei(wei, unit, dp){
+  let v; try{ v = BigInt(wei); }catch(e){ return "—"; }
+  const s = fmtWei(wei, dp);
+  return (v > 0n ? "+" : "") + s + (unit? " " + unit : "");
+}
+function clsWei(wei){ try{ const v=BigInt(wei); return v>0n? "pos" : (v<0n? "neg":"zero"); }catch(e){ return ""; } }
+function shortAddr(a){ return a.length>13 ? a.slice(0,6)+"…"+a.slice(-4) : a; }
+/* decimal string (native unit) -> wei BigInt */
+function parseNativeToWei(str){
+  str = String(str||"").trim().replace(/,/g,"");
+  if(!/^\d*(\.\d*)?$/.test(str) || str==="" || str===".") return null;
+  const parts = str.split(".");
+  const ip = parts[0] || "0"; const fp = (parts[1]||"").slice(0,18).padEnd(18,"0");
+  try{ return BigInt(ip) * W18 + BigInt(fp||"0"); }catch(e){ return null; }
+}
+
+/* ============================== API ============================== */
+const CH = {
+  bsc: { base:"/api/bsc", unit:"BNB", token:"BEM" },
+  xl:  { base:"/api/xl",  unit:"OKB", token:"FAB" }
+};
+async function apiGet(url, timeoutMs){
+  timeoutMs = (timeoutMs===undefined)? 8000 : timeoutMs;
+  let res;
+  const ctl = (typeof AbortController !== "undefined")? new AbortController() : null;
+  const timer = ctl? setTimeout(()=>ctl.abort(), timeoutMs) : null;
+  try{ res = await fetch(url, {headers:{"Accept":"application/json"}, signal: ctl? ctl.signal : undefined}); }
+  catch(e){ if(timer) clearTimeout(timer); const er = new Error(e && e.name==="AbortError"? "timeout":"network"); er.kind="src"; throw er; }
+  if(timer) clearTimeout(timer);
+  if(!res.ok){ const er = new Error("http "+res.status); er.kind = (res.status===404)? "notfound":"src"; er.status=res.status; throw er; }
+  try{ return await res.json(); }
+  catch(e){ const er = new Error("bad json"); er.kind="src"; throw er; }
+}
+/* paginate an account endpoint; key = array field name; returns {items, pages, capped} */
+async function fetchAllPages(makeUrl, key, maxPages, onPage){
+  let items = [], cursor = null, pages = 0, capped = false;
+  while(pages < maxPages){
+    const j = await apiGet(makeUrl(cursor));
+    const arr = Array.isArray(j[key]) ? j[key] : [];
+    for(const it of arr) items.push(it);
+    pages++;
+    if(onPage) onPage(pages, items.length);
+    cursor = j.nextCursor;
+    if(!cursor){ capped = false; break; }
+    if(pages >= maxPages) capped = true;
+  }
+  return {items, pages, capped};
+}
+
+/* ============================== language ============================== */
+function applyLang(){
+  document.body.setAttribute("data-lang", LANG);
+  document.documentElement.setAttribute("lang", LANG==="zh"? "zh":"en");
+  $$("[data-i18n]").forEach(el=>{
+    const k = el.getAttribute("data-i18n");
+    const v = t(k);
+    if(typeof v === "string") el.innerHTML = v;
+  });
+  $("#langBtn").textContent = LANG==="zh"? "EN" : "中文";
+  $("#simUnit").textContent = CH[simChain].unit;
+  renderCases();
+  renderWatchlist();
+  if(lastResult) renderResult(lastResult);
+  if(lastSim && lastSim.snap) renderSimStats(lastSim.snap);
+}
+$("#langBtn").addEventListener("click", ()=>{
+  LANG = LANG==="zh"? "en":"zh";
+  try{ localStorage.setItem("twl_lang", LANG); }catch(e){}
+  applyLang();
+});
+try{ const sl = localStorage.getItem("twl_lang"); if(sl==="en"||sl==="zh") LANG = sl; }catch(e){}
+
+/* ============================== health badge ============================== */
+let lastHealthOk = null; // Date of last success
+async function checkHealth(){
+  const badge = $("#healthBadge"), txt = $("#healthText");
+  let ok = false;
+  try{
+    const h = await apiGet("/api/health");
+    if(h && h.ok) ok = true;
+    const p = await apiGet(CH.bsc.base + "/v1/prices/bem");
+    if(p && p.priceAtomic) ok = true;
+  }catch(e){ ok = false; }
+  if(ok){
+    lastHealthOk = new Date();
+    badge.className = "health ok";
+    txt.textContent = t("health_ok") + " · " + lastHealthOk.toLocaleTimeString();
+  }else{
+    badge.className = "health bad";
+    txt.textContent = t("health_bad") + (lastHealthOk? " · " + t("health_last") + " " + lastHealthOk.toLocaleTimeString() : "");
+  }
+}
+
+/* ============================== cases ============================== */
+let CASES = null;
+const CASE_EN_STORY = {
+"case-1":"The leaderboard's #1 'earner': +564.72 BNB of machine sales — against 664.52 BNB of net component purchases and only 151.60 BEM claimed in its lifetime. Three ledgers combined: −99.80 BNB visible. Roughly 285 more machines left off-market (inferred from component consumption) with invisible proceeds, so the honest answer is an audit interval [−92, +200], not a point estimate: what is disproven is 'safely earned 565'; what cannot be proven is exactly how much it lost.",
+"case-2":"The cleanest book in the field. It entered the genesis price zone in its first 14 days (average NAND 0.0016 BNB — cheaper than 75% of the calibration sample, P25 = 0.0029), spent just 38.49 BNB on components in total, and netted +707.26 BNB across 18 machine trades — 18.4× its component input. Under the three-ledger view it still stands: one of the few the leaderboard didn't wrong.",
+"case-3":"Nearly invisible on the sales leaderboard (machine ledger just +6.66 BNB) — yet #1 in both machines held (220) and daily output (~301 BEM), with 30,200.82 BEM claimed over its lifetime, worth ≈ +1,208 BNB on its own. Re-ranked by three ledgers it jumps from unranked to the real #1 (≈ +877 BNB). Read only the sales board and you miss the protocol's biggest actual earner.",
+"case-4":"The leaderboard books 633.70 BNB as the lead wallet's 'earnings'. Split the ledgers: self-build ratio 0, zero machine buys, zero component trades — it never produced anything. The 633.70 is pass-through flow from selling upstream builders' machines; the commission it keeps is not in the on-chain accounts. The number itself isn't wrong — reading it as profit is. Signature of the type: two of the three ledgers are empty.",
+"case-5":"It doesn't exist on the sales leaderboard — never sold a single machine. But it sank 1,248.90 BNB into components and runs the field's #2 daily output (~279 BEM/day) from just 38 machines, claiming 23,516.86 BEM. Realized three-ledger ≈ −308 BNB — not a loss, but capital parked in inventory: 38 machines softly valued at ≈ 1,928 BNB, unrealized. The radar's answer is a label, not a verdict: the profit sits in inventory, and the exit price decides the final P&L.",
+"case-6":"The fullest two-ledger trail on X Layer — most machine and component trades among the 13 tracked holders. Machine ledger: bought 0, sold 58, net +82.7480 OKB (matches the official summary to the digit). Component net input +138.7751 OKB; holds 25 machines worth 65.4091 OKB. Visible three-ledger total +9.3820 OKB (soft; claims excluded — the X Layer public RPC caps log queries at 100 blocks against a ~2.95M-block claim span, so claims are marked pending precompute, never estimated). Verdict: Regular Trader (degraded) — gross ratio 1.714 and 58 sales pass both Builder-Rotator gates; only the self-build axis is uncomputable on X Layer (no creator field), and the card says so."
+};
+const TAG_EN = {"场外敞口未定":"Off-market exposure undetermined","创世低价区":"Genesis price zone","降级判定":"Degraded verdict","领取待预计算":"Claims pending precompute"};
+async function loadCases(){
+  try{
+    const j = await apiGet("/cases.json");
+    CASES = j;
+    const c1 = (j.cases||[]).find(c=>c.id==="case-1");
+    if(c1){
+      $("#vsBand").style.display = "flex";
+      $("#vsLeft").textContent = "+" + fmtNum(c1.leaderboard_view_bnb,2) + " BNB";
+      $("#vsRight").textContent = fmtNum(c1.three_ledger.visible_total_bnb,2) + " BNB";
+    }
+    renderCases();
+  }catch(e){
+    $("#caseChips").innerHTML = '<div class="errbox src show" style="margin-top:0">' + esc(t("err_cases")) + "</div>";
+  }
+}
+let activeCaseId = null;
+function renderCases(){
+  const box = $("#caseChips");
+  if(!CASES || !CASES.cases){ return; }
+  box.innerHTML = "";
+  CASES.cases.forEach(c=>{
+    const b = document.createElement("button");
+    b.className = "chipbtn" + (c.id===activeCaseId? " on":"");
+    const vk = CASE_VERDICT_KEY[c.verdict];
+    b.innerHTML = '<div class="cl">' + esc(c.label) + " · " + (c.chain==="xl"? "X Layer":"BSC") + '</div>' +
+      '<div class="cv">' + esc(vk? verdictName(vk) : c.verdict) + '</div>' +
+      '<div class="ca">' + esc(c.address_short) + '</div>';
+    b.addEventListener("click", ()=>{ activeCaseId = c.id; renderCases(); renderCaseCard(c); });
+    box.appendChild(b);
+  });
+  if(activeCaseId){
+    const c = CASES.cases.find(x=>x.id===activeCaseId);
+    if(c) renderCaseCard(c);
+  }
+}
+function caseRowLabel(k){ const m = t("case_rows"); return (m && m[k])? m[k] : k; }
+function factLabel(k){ const m = t("fact_rows"); return (m && m[k])? m[k] : k; }
+function renderCaseCard(c){
+  const unit = c.chain==="xl"? "OKB":"BNB";
+  const vk = CASE_VERDICT_KEY[c.verdict];
+  let h = '<div class="panel casecard"><h3>' + esc(c.label) + " — " + esc(vk? verdictName(vk) : c.verdict) + "</h3>";
+  h += '<div class="meta-line">' + esc(c.address_short) + " · " + (c.chain==="xl"? "X Layer":"BSC") + " · " + esc(t("cases_static")) + "</div>";
+  if(c.tags && c.tags.length){
+    h += '<div class="tagrow">' + c.tags.map(x=>'<span class="tag warn">' + esc(LANG==="en"? (TAG_EN[x]||x) : x) + "</span>").join("") + "</div>";
+  }
+  const lb = (c.leaderboard_view_bnb!==undefined)? c.leaderboard_view_bnb : c.leaderboard_view_okb;
+  const lbUnit = (c.leaderboard_view_bnb!==undefined)? "BNB":"OKB";
+  if(lb!==undefined){
+    h += '<table class="kv"><tr><td class="k">' + esc(caseRowLabel("leaderboard_view")) + '</td><td class="v">' + (lb>0? "+":"") + fmtNum(lb, lbUnit==="OKB"? 4:2) + " " + lbUnit + "</td></tr></table>";
+  }
+  const tl = c.three_ledger || {};
+  h += '<div class="ledger-t">' + esc(t("o_ledger")) + " · " + esc(t("m_ledger").split(" · ")[0]) + " / " + esc(t("c_ledger").split(" · ")[0]) + "</div>";
+  h += '<table class="kv">';
+  Object.keys(tl).forEach(k=>{
+    const v = tl[k];
+    if(Array.isArray(v)){
+      h += "<tr><td class='k'>" + esc(caseRowLabel(k)) + "</td><td class='v'>[" + v.map(x=>fmtNum(x,0)).join(", ") + "] " + unit + "</td></tr>";
+    } else if(typeof v === "number"){
+      const dp = unit==="OKB"? 4:2;
+      h += "<tr><td class='k'>" + esc(caseRowLabel(k)) + "</td><td class='v " + (v>0?"pos":(v<0?"neg":"zero")) + "'>" + (v>0? "+":"") + fmtNum(v,dp) + (k==="claims_bem"? " BEM" : " " + unit) + "</td></tr>";
+    } else {
+      h += "<tr><td class='k'>" + esc(caseRowLabel(k)) + "</td><td class='note'>" + esc(v) + "</td></tr>";
+    }
+  });
+  h += "</table>";
+  const kf = c.key_facts || {};
+  if(kf.wallets){
+    h += '<div class="ledger-t">' + esc(LANG==="en"? "Wallets":"钱包明细") + "</div><table class='kv'>";
+    kf.wallets.forEach(w=>{
+      h += "<tr><td class='k mono'>" + esc(w.address_short) + "</td><td class='v'>" +
+        esc(factLabel("machines_bought")) + " " + w.machines_bought + " · " + esc(factLabel("machines_sold")) + " " + w.machines_sold +
+        " · " + esc(factLabel("sell_gross_bnb")) + " " + fmtNum(w.sell_gross_bnb,2) + " BNB</td></tr>";
+    });
+    h += "</table>";
+  } else {
+    const keys = Object.keys(kf).filter(k=>k!=="inventory_note");
+    if(keys.length){
+      h += '<table class="kv">';
+      keys.forEach(k=>{
+        const v = kf[k];
+        let vs;
+        if(typeof v === "number"){ vs = (v<1 && v>-1 && k.indexOf("ratio")>=0 || k==="sell_rate" || k==="element_buy_share")? fmtNum(v, k==="early_nand_avg_price_bnb"? 4:3) : fmtNum(v, (v%1!==0)? 4:0); }
+        else vs = esc(v);
+        h += "<tr><td class='k'>" + esc(factLabel(k)) + "</td><td class='v'>" + vs + "</td></tr>";
+      });
+      h += "</table>";
+    }
+    if(kf.inventory_note) h += '<p class="footnote">' + esc(kf.inventory_note) + "</p>";
+  }
+  h += '<p class="story">' + esc(LANG==="en"? (CASE_EN_STORY[c.id]||c.story) : c.story) + "</p>";
+  h += "</div>";
+  $("#caseCard").innerHTML = h;
+}
+</script>
+
+<script>
+"use strict";
+/* ============================== lookup: staged streams ============================== */
+let lookupChain = "bsc";
+let lastResult = null;
+$$("#chainSeg button").forEach(b=> b.addEventListener("click", ()=>{
+  $$("#chainSeg button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); lookupChain = b.getAttribute("data-chain");
+}));
+
+function newCur(chain, addr){
+  return {
+    chain, addr, unit: CH[chain].unit, verdict: null, flip: null, _flipChecked: false,
+    m: {status:"pending", summary:null, empty:false, bought:0, sold:0, selfbuild:null, capped:false, pages:0},
+    c: {status:"pending", buyWei:0n, sellWei:0n, netWei:0n, buyCount:0, sellCount:0, capped:false, pages:0},
+    o: {status:"pending", nand:null, latch:null, volWei:null, volSource:null, rVal:null, dVal:null, softWei:null}
+  };
+}
+function setStep(i, state, sub){
+  const el = document.querySelector('#lkSteps .step[data-step="'+i+'"]');
+  if(!el) return;
+  el.classList.remove("active","done","fail");
+  if(state) el.classList.add(state);
+  const dot = el.querySelector(".sdot");
+  dot.textContent = state==="done"? "✓" : (state==="fail"? "!" : String(i));
+  if(sub!==undefined){ const s = document.getElementById("ssub"+i); if(s) s.textContent = sub; }
+}
+function buildResultSkeleton(cur){
+  $("#lookupResult").innerHTML =
+    '<div class="steps" id="lkSteps">' +
+    [1,2,3].map(i=>'<div class="step" data-step="'+i+'"><span class="sdot">'+i+'</span><span><span class="slab">'+esc(t("step"+i))+'</span> ('+i+'/3)<span class="ssub" id="ssub'+i+'"></span></span></div>').join("") +
+    "</div>" +
+    '<div id="verdictBox"></div>' +
+    '<div class="panel" id="secM"></div>' +
+    '<div class="panel" id="secC"></div>' +
+    '<div class="panel" id="secO"></div>';
+  renderResult(cur);
+}
+function renderResult(cur){
+  if(!document.getElementById("secM")) return;
+  $$("#lkSteps .step").forEach(st=>{
+    const lab = st.querySelector(".slab");
+    if(lab) lab.textContent = t("step" + st.getAttribute("data-step"));
+  });
+  renderVerdict(cur); renderSectionM(cur); renderSectionC(cur); renderSectionO(cur);
+}
+
+/* ---------- stream M: circuit-summary + circuit-trades ---------- */
+async function runStreamM(cur){
+  cur.m.status = "pending"; setStep(1,"active",""); renderSectionM(cur); renderVerdict(cur);
+  const base = CH[cur.chain].base, addr = cur.addr;
+  try{
+    let summary = null, empty = false;
+    try{ summary = await apiGet(base + "/v1/account/" + addr + "/circuit-summary"); }
+    catch(e){ if(e.kind==="notfound") empty = true; else throw e; }
+    cur.m.summary = summary; cur.m.empty = empty;
+    if(!empty){
+      const pulled = await fetchAllPages(
+        c2 => base + "/v1/account/" + addr + "/circuit-trades?limit=100" + (c2? "&before=" + encodeURIComponent(c2) : ""),
+        "trades", 60,
+        (p,n)=>{ cur.m.pages = p; if(cur===lastResult) setStep(1,"active", p + t("page_unit") + " · " + n + t("trade_unit")); });
+      let bought = 0, sold = 0, soldSelf = 0;
+      const A = addr.toLowerCase();
+      for(const tr of pulled.items){
+        if((tr.buyer||"").toLowerCase() === A) bought++;
+        if((tr.seller||"").toLowerCase() === A){ sold++; if(tr.creator && tr.creator.toLowerCase() === A) soldSelf++; }
+      }
+      cur.m.bought = bought; cur.m.sold = sold;
+      cur.m.selfbuild = (cur.chain === "xl")? null : (sold > 0? soldSelf / sold : null);
+      cur.m.capped = pulled.capped;
+      if(summary && Number(summary.tradeCount||0) === 0 && Number(summary.heldCount||0) === 0 && pulled.items.length === 0) cur.m.empty = true;
+    }
+    cur.m.status = "ok";
+  }catch(e){ cur.m.status = "fail"; }
+  if(cur === lastResult) setStep(1, cur.m.status==="ok"? "done":"fail", cur.m.status==="ok" && cur.m.pages? cur.m.pages + t("page_unit") : "");
+  if(cur.o.status === "ok"){ computeSoft(cur); }
+  renderSectionM(cur); renderSectionO(cur); updateVerdict(cur); maybeFinish(cur);
+}
+/* ---------- stream C: activity (component ledger) ---------- */
+async function runStreamC(cur){
+  cur.c.status = "pending"; setStep(2,"active",""); renderSectionC(cur); updateVerdict(cur);
+  const base = CH[cur.chain].base, addr = cur.addr;
+  try{
+    let pulled = {items:[], capped:false};
+    try{
+      pulled = await fetchAllPages(
+        c2 => base + "/v1/account/" + addr + "/activity?limit=100" + (c2? "&before=" + encodeURIComponent(c2) : ""),
+        "trades", 60,
+        (p,n)=>{ cur.c.pages = p; if(cur===lastResult) setStep(2,"active", p + t("page_unit") + " · " + n + t("trade_unit")); });
+    }catch(e){ if(e.kind !== "notfound") throw e; }
+    let buy = 0n, sell = 0n, bn = 0, sn = 0;
+    for(const tr of pulled.items){
+      let w; try{ w = BigInt(tr.totalWei || "0"); }catch(e){ w = 0n; }
+      if(tr.side === "buy"){ buy += w; bn++; }
+      else if(tr.side === "sell"){ sell += w; sn++; }
+    }
+    cur.c.buyWei = buy; cur.c.sellWei = sell; cur.c.netWei = buy - sell;
+    cur.c.buyCount = bn; cur.c.sellCount = sn; cur.c.capped = pulled.capped;
+    cur.c.status = "ok";
+  }catch(e){ cur.c.status = "fail"; }
+  if(cur === lastResult) setStep(2, cur.c.status==="ok"? "done":"fail", cur.c.status==="ok" && cur.c.pages? cur.c.pages + t("page_unit") : "");
+  renderSectionC(cur); updateVerdict(cur); maybeFinish(cur);
+}
+/* ---------- stream O: portfolio + global-feed depth ---------- */
+async function globalVolumeWei(chain){
+  const base = CH[chain].base;
+  const cutoff = Math.floor(Date.now()/1000) - 86400;
+  let total = 0n, cursor = null, pages = 0;
+  while(pages < 30){
+    const j = await apiGet(base + "/v1/circuit-trades?limit=100" + (cursor? "&before=" + encodeURIComponent(cursor) : ""));
+    const arr = Array.isArray(j.trades)? j.trades : [];
+    if(!arr.length) break;
+    let allOld = true;
+    for(const tr of arr){
+      const ts = Number(tr.blockTimestamp || 0);
+      if(ts > 0 && ts < cutoff){ /* older than 24h: skip */ }
+      else { try{ total += BigInt(tr.sellerNetWei || "0"); }catch(e){} allOld = false; }
+    }
+    pages++;
+    cursor = j.nextCursor;
+    if(!cursor || allOld) break;
+  }
+  return total;
+}
+async function runStreamO(cur){
+  cur.o.status = "pending"; renderSectionO(cur);
+  const base = CH[cur.chain].base, addr = cur.addr;
+  let anyOk = false;
+  try{
+    const pf = await apiGet(base + "/v1/account/" + addr + "/portfolio");
+    let nand = 0, latch = 0, seen = false;
+    (pf.assets || []).forEach(a=>{
+      const wb = a.walletBalances || {};
+      if(wb.NAND !== undefined){ nand += Number(wb.NAND) || 0; seen = true; }
+      if(wb.LATCH !== undefined){ latch += Number(wb.LATCH) || 0; seen = true; }
+    });
+    if(seen){ cur.o.nand = nand; cur.o.latch = latch; }
+    anyOk = true;
+  }catch(e){ if(e.kind === "notfound"){ cur.o.nand = 0; cur.o.latch = 0; anyOk = true; } }
+  try{
+    const vol = await globalVolumeWei(cur.chain);
+    if(vol > 0n){ cur.o.volWei = vol; cur.o.volSource = "global"; anyOk = true; }
+  }catch(e){ /* fall through to snapshot depth */ }
+  if(cur.o.volWei === null){
+    try{
+      const snap = await loadSnapshot(cur.chain);
+      if(snap && snap.totalAskWei > 0n){ cur.o.volWei = snap.totalAskWei; cur.o.volSource = "snap"; anyOk = true; }
+    }catch(e){ /* no depth source available */ }
+  }
+  computeSoft(cur);
+  cur.o.status = anyOk? "ok" : "fail";
+  renderSectionO(cur); updateVerdict(cur); maybeFinish(cur);
+}
+function computeSoft(cur){
+  const s = cur.m.summary;
+  if(!s || cur.o.volWei === null){ cur.o.rVal = null; cur.o.dVal = null; cur.o.softWei = null; return; }
+  let mv; try{ mv = BigInt(s.marketValueWei || "0"); }catch(e){ mv = 0n; }
+  if(mv === 0n){ cur.o.rVal = 0; cur.o.dVal = 0.95; cur.o.softWei = 0n; return; }
+  const r = ratioNum(mv, cur.o.volWei);
+  if(r === null){ cur.o.rVal = null; cur.o.dVal = null; cur.o.softWei = null; return; }
+  cur.o.rVal = r;
+  const D = 0.95 / (1 + 0.08 * r);
+  cur.o.dVal = D;
+  cur.o.softWei = mv * BigInt(Math.round(D * 1000000)) / 1000000n;
+}
+
+/* ============================== classifier ============================== */
+function toBnbEqWei(wei, chain){ return chain === "xl"? (wei * 100n) / 691n : wei; }
+function classify(cur){
+  if(cur.m.status !== "ok" || !cur.m.summary) return null;
+  const s = cur.m.summary, chain = cur.chain;
+  let machineNet, sellGross;
+  try{ machineNet = BigInt(s.realizedProfitWei || "0"); sellGross = BigInt(s.sellProceedsWei || "0"); }
+  catch(e){ return null; }
+  const held = Number(s.heldCount || 0);
+  const bought = cur.m.bought, sold = cur.m.sold, selfbuild = cur.m.selfbuild;
+  const sellRate = (sold + held) > 0? sold / (sold + held) : null;
+  const cOk = cur.c.status === "ok";
+  const grossRatio = cOk? ratioNum(cur.c.buyWei, sellGross) : null;
+  const netRatio = cOk? ratioNum(cur.c.netWei, sellGross) : null;
+  const sellGrossEq = toBnbEqWei(sellGross, chain);
+  const compNetEq = cOk? toBnbEqWei(cur.c.netWei, chain) : null;
+  const gates = { gross: grossRatio !== null && grossRatio >= 0.60, sold: sold >= 50 };
+  let key = "regular";
+  if(sold >= 20 && bought === 0 && selfbuild === 0 && cOk && (cur.c.buyCount + cur.c.sellCount) === 0) key = "channel";
+  else if(machineNet > 0n && netRatio !== null && netRatio <= 0.20 && sellGrossEq >= 20n * W18) key = "multiple";
+  else if(grossRatio !== null && grossRatio >= 0.60 && sold >= 50 && selfbuild !== null && selfbuild >= 0.50) key = "builder";
+  else if(sellRate !== null && sellRate <= 0.35 && held >= 20) key = "holder";
+  else if(compNetEq !== null && compNetEq >= 300n * W18 && sellRate !== null && sellRate <= 0.35) key = "stockpiler";
+  let srcDist = false;
+  if(cOk){
+    const tot = cur.c.buyWei + cur.c.sellWei;
+    const share = tot > 0n? ratioNum(cur.c.buyWei, tot) : null;
+    srcDist = compNetEq <= -5n * W18 && share !== null && share <= 0.30 && cur.c.sellCount >= 5;
+  }
+  const degraded = chain === "xl" && key === "regular";
+  return { key, displayKey: degraded? "regular_deg" : key, degraded, provisional: !cOk,
+           gates, srcDist, netRatio, grossRatio, sellRate, held, bought, sold, selfbuild };
+}
+function updateVerdict(cur){
+  cur.verdict = classify(cur);
+  if(cur.verdict && !cur.verdict.provisional && !cur._flipChecked){
+    cur._flipChecked = true;
+    const wl = wlLoad();
+    const ent = wl.find(e=>e.chain === cur.chain && e.addr === cur.addr);
+    if(ent && ent.vkey !== cur.verdict.displayKey){
+      cur.flip = {from: ent.vkey, to: cur.verdict.displayKey};
+      ent.vkey = cur.verdict.displayKey; ent.ts = Date.now();
+      wlSave(wl); renderWatchlist();
+    }
+  }
+  if(cur === lastResult && cur.m.status === "ok" && (cur.c.status === "pending" || cur.o.status === "pending")) setStep(3, "active", "");
+  renderVerdict(cur);
+}
+function maybeFinish(cur){
+  if(cur !== lastResult) return;
+  if(cur.m.status === "pending" || cur.c.status === "pending" || cur.o.status === "pending") return;
+  setStep(3, cur.verdict? "done" : "fail", "");
+  $("#lookupBtn").disabled = false;
+  $("#lookupProg").textContent = t("prog_done");
+  if(cur.m.status === "ok" && cur.m.empty && cur.c.status === "ok" && (cur.c.buyCount + cur.c.sellCount) === 0) showLookupErr("nodata");
+}
+
+/* ============================== result rendering ============================== */
+function factHtml(k, v){ return '<div class="fact"><div class="fk">' + esc(k) + '</div><div class="fv num">' + v + "</div></div>"; }
+function renderVerdict(cur){
+  const box = $("#verdictBox"); if(!box) return;
+  if(cur.m.status === "pending"){
+    box.innerHTML = '<div class="panel"><div class="loadrow"><span class="spin"></span>' + esc(t("synth")) + "</div></div>";
+    return;
+  }
+  if(cur.m.status === "fail"){
+    box.innerHTML = '<div class="panel"><div style="font-weight:700">' + esc(t("wait_m")) + '</div><div class="secwarn">' + esc(t("busy")) + ' <button class="retrybtn" data-retry="m">' + esc(t("retry_btn")) + "</button></div></div>";
+    return;
+  }
+  const v = cur.verdict; if(!v){ box.innerHTML = ""; return; }
+  let h = '<div class="verdict-card"><div class="vlab">' + esc(t("verdict_lab")) + "</div>";
+  h += '<div class="vname">' + esc(verdictName(v.displayKey)) + (v.provisional? '<span class="provbadge">' + esc(t("prov_badge")) + "</span>" : "") + "</div>";
+  h += '<div class="vaddr mono">' + esc(cur.addr) + " · " + (cur.chain === "xl"? "X Layer" : "BSC") + "</div>";
+  if(cur.flip) h += '<div><span class="flipbadge">' + esc(t("flip")) + "：" + esc(verdictName(cur.flip.from)) + " → " + esc(verdictName(cur.flip.to)) + "</span></div>";
+  if(v.srcDist) h += '<div class="tagrow"><span class="tag">' + esc(t("parallel_lab")) + "：" + esc(verdictName("srcdist")) + "</span></div>";
+  if(v.degraded){
+    h += '<div class="degnote"><b>' + esc(t("deg_note_h")) + "</b>" + esc(t("deg_note")) +
+      "<br>· " + esc(t("deg_gross")) + " — " + (v.gates.gross? esc(t("pass")) : esc(t("fail"))) + (v.grossRatio !== null? " (" + fmtNum(v.grossRatio, 3) + ")" : "") +
+      "<br>· " + esc(t("deg_sold")) + " — " + (v.gates.sold? esc(t("pass")) : esc(t("fail"))) + " (" + v.sold + ")" +
+      (v.gates.gross && v.gates.sold? esc(t("deg_up")) : esc(t("deg_notup"))) + "</div>";
+  }
+  if(v.netRatio !== null && v.netRatio !== undefined){
+    const pos = x => { const c = Math.max(-0.5, Math.min(1.5, x)); return ((c + 0.5) / 2 * 100).toFixed(1) + "%"; };
+    h += '<div class="pctl"><div class="cap"><span>' + esc(t("pctl_cap")) + '</span><span>P25 −0.02 · P50 0.03 · P75 0.51</span></div><div class="pbar">' +
+      '<div class="pmark" style="left:' + pos(-0.02) + '"><span>P25</span></div>' +
+      '<div class="pmark" style="left:' + pos(0.03) + '"><span>P50</span></div>' +
+      '<div class="pmark" style="left:' + pos(0.51) + '"><span>P75</span></div>' +
+      '<div class="pval" style="left:' + pos(v.netRatio) + '">' + fmtNum(v.netRatio, 3) + "</div>" +
+      '<div class="pdot" style="left:' + pos(v.netRatio) + '"></div></div></div>';
+  }
+  const tai = LANG === "zh"? t("units").tai : "";
+  h += '<div class="factrow">' +
+    factHtml(t("f_bought"), v.bought + tai) +
+    factHtml(t("f_sold"), v.sold + tai) +
+    factHtml(t("f_self"), v.selfbuild === null? esc(t("na")) : fmtNum(v.selfbuild * 100, 1) + "%") +
+    factHtml(t("f_sellrate"), v.sellRate === null? "—" : fmtNum(v.sellRate, 3)) +
+    factHtml(t("f_gross"), v.grossRatio === null? "—" : fmtNum(v.grossRatio, 3)) +
+    factHtml(t("f_net"), v.netRatio === null? "—" : fmtNum(v.netRatio, 3)) +
+    "</div>";
+  if(cur.chain === "xl") h += '<p class="footnote">' + esc(t("rate_note")) + "</p>";
+  h += '<div class="btnrow"><button class="ghostbtn" data-act="wl">' + esc(t("add_wl")) + '</button><button class="ghostbtn" data-act="share">' + esc(t("share_btn")) + "</button></div>";
+  h += "</div>";
+  box.innerHTML = h;
+}
+function secHead(key){ return '<div class="ledger-t" style="margin-top:2px">' + esc(t(key)) + "</div>"; }
+function secWarn(stream){ return '<div class="secwarn">' + esc(t("busy")) + ' <button class="retrybtn" data-retry="' + stream + '">' + esc(t("retry_btn")) + "</button></div>"; }
+function secLoading(){ return '<div class="loadrow"><span class="spin"></span>' + esc(t("sec_loading")) + "</div>"; }
+function kvRow(k, v, cls){ return '<tr><td class="k">' + esc(k) + '</td><td class="v ' + (cls || "") + '">' + v + "</td></tr>"; }
+function renderSectionM(cur){
+  const el = $("#secM"); if(!el) return;
+  let h = secHead("m_ledger");
+  if(cur.m.status === "pending") h += secLoading();
+  else if(cur.m.status === "fail") h += secWarn("m");
+  else{
+    const s = cur.m.summary || {}, u = cur.unit;
+    h += '<table class="kv">' +
+      kvRow(t("r_buy_cost"), fmtWei(s.buyCostWei || "0") + " " + u) +
+      kvRow(t("r_sell_gross"), fmtWei(s.sellProceedsWei || "0") + " " + u) +
+      kvRow(t("r_machine_net"), fmtSignedWei(s.realizedProfitWei || "0", u), clsWei(s.realizedProfitWei || "0")) +
+      kvRow(t("r_held"), String(Number(s.heldCount || 0))) +
+      kvRow(t("r_mktval"), fmtWei(s.marketValueWei || "0") + " " + u) +
+      "</table>";
+    if(cur.m.capped) h += '<p class="footnote">' + esc(t("capped_note")) + "</p>";
+  }
+  el.innerHTML = h;
+}
+function renderSectionC(cur){
+  const el = $("#secC"); if(!el) return;
+  let h = secHead("c_ledger");
+  if(cur.c.status === "pending") h += secLoading();
+  else if(cur.c.status === "fail") h += secWarn("c");
+  else{
+    const u = cur.unit;
+    h += '<table class="kv">' +
+      kvRow(t("r_comp_buy"), fmtWei(cur.c.buyWei) + " " + u) +
+      kvRow(t("r_comp_sell"), fmtWei(cur.c.sellWei) + " " + u) +
+      kvRow(t("r_comp_net"), fmtSignedWei(cur.c.netWei, u), clsWei(cur.c.netWei)) +
+      kvRow(t("r_comp_buyn"), String(cur.c.buyCount)) +
+      kvRow(t("r_comp_selln"), String(cur.c.sellCount)) +
+      "</table>";
+    if(cur.c.capped) h += '<p class="footnote">' + esc(t("capped_note")) + "</p>";
+  }
+  el.innerHTML = h;
+}
+function renderSectionO(cur){
+  const el = $("#secO"); if(!el) return;
+  let h = secHead("o_ledger");
+  if(cur.o.status === "pending") h += secLoading();
+  else if(cur.o.status === "fail") h += secWarn("o");
+  else{
+    const s = cur.m.summary, u = cur.unit;
+    let mv = null;
+    if(s){ try{ mv = BigInt(s.marketValueWei || "0"); }catch(e){ mv = null; } }
+    const soft = cur.o.softWei !== null? cur.o.softWei : mv;
+    h += '<table class="kv">';
+    h += kvRow(t("r_held"), s? String(Number(s.heldCount || 0)) : "—");
+    h += kvRow(t("r_mktval"), mv !== null? fmtWei(mv) + " " + u : "—");
+    if(cur.o.dVal !== null) h += kvRow("D / r", "D = " + fmtNum(cur.o.dVal, 3) + " · r = " + fmtNum(cur.o.rVal, 2));
+    h += kvRow(t("r_soft"), soft !== null? fmtWei(soft) + " " + u : "—");
+    if(cur.o.nand !== null) h += kvRow(t("r_inv_count"), "NAND " + fmtNum(cur.o.nand, 0) + " · LATCH " + fmtNum(cur.o.latch, 0));
+    h += '<tr><td class="k">' + esc(t("r_claims")) + '</td><td class="note">' + esc(t("claims_na")) + "</td></tr>";
+    h += "</table>";
+    if(cur.o.volSource === "global") h += '<p class="footnote">' + esc(t("r_note_global")) + "</p>";
+    else if(cur.o.volSource === "snap") h += '<p class="footnote">' + esc(t("r_note_snap")) + "</p>";
+    else h += '<p class="footnote">' + esc(t("r_note_none")) + "</p>";
+  }
+  el.innerHTML = h;
+}
+
+/* ============================== lookup driver ============================== */
+function showLookupErr(kind){
+  const e = $("#lookupErr");
+  e.className = "errbox show " + (kind === "src"? "src" : kind === "nodata"? "nodata" : "inval");
+  e.textContent = t(kind === "src"? "err_src" : kind === "nodata"? "err_nodata" : "err_addr");
+}
+function hideLookupErr(){ const e = $("#lookupErr"); e.className = "errbox"; e.textContent = ""; }
+function doLookup(){
+  const raw = $("#addrInput").value.trim();
+  hideLookupErr();
+  if(!/^0x[0-9a-fA-F]{40}$/.test(raw)){ showLookupErr("inval"); return; }
+  const cur = newCur(lookupChain, raw.toLowerCase());
+  lastResult = cur;
+  $("#lookupProg").textContent = "";
+  $("#lookupBtn").disabled = true;
+  buildResultSkeleton(cur);
+  setStep(1, "active", ""); setStep(2, "", ""); setStep(3, "", "");
+  runStreamM(cur); runStreamC(cur); runStreamO(cur);
+}
+$("#lookupBtn").addEventListener("click", doLookup);
+$("#addrInput").addEventListener("keydown", e=>{ if(e.key === "Enter") doLookup(); });
+$("#lookupResult").addEventListener("click", e=>{
+  const rb = e.target.closest? e.target.closest("[data-retry]") : null;
+  if(rb && lastResult){
+    const s = rb.getAttribute("data-retry");
+    if(s === "m") runStreamM(lastResult);
+    else if(s === "c") runStreamC(lastResult);
+    else if(s === "o") runStreamO(lastResult);
+    return;
+  }
+  const act = e.target.closest? e.target.closest("[data-act]") : null;
+  if(act && lastResult && lastResult.verdict){
+    if(act.getAttribute("data-act") === "wl") addToWatchlist(lastResult);
+    else if(act.getAttribute("data-act") === "share") drawShareCard(lastResult);
+  }
+});
+
+/* ============================== watchlist storage ============================== */
+const WL_KEY = "twl_watchlist";
+function wlLoad(){ try{ const v = JSON.parse(localStorage.getItem(WL_KEY)); return Array.isArray(v)? v : []; }catch(e){ return []; } }
+function wlSave(l){ try{ localStorage.setItem(WL_KEY, JSON.stringify(l)); }catch(e){} }
+function addToWatchlist(cur){
+  if(!cur.verdict) return;
+  const wl = wlLoad();
+  const ent = wl.find(e=>e.chain === cur.chain && e.addr === cur.addr);
+  if(ent){ ent.vkey = cur.verdict.displayKey; ent.ts = Date.now(); }
+  else wl.push({chain: cur.chain, addr: cur.addr, vkey: cur.verdict.displayKey, ts: Date.now()});
+  wlSave(wl); renderWatchlist();
+}
+
+/* ============================== share card ============================== */
+function wrapText(ctx, text, x, y, maxW, lh){
+  let line = "", yy = y;
+  for(const ch of text){
+    const test = line + ch;
+    if(ctx.measureText(test).width > maxW && line){ ctx.fillText(line, x, yy); line = ch; yy += lh; }
+    else line = test;
+  }
+  if(line) ctx.fillText(line, x, yy);
+  return yy;
+}
+function drawShareCard(cur){
+  const cv = $("#shareCanvas"), ctx = cv.getContext("2d");
+  const Wd = 750, H = 1040;
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "#1b1408"); g.addColorStop(0.45, "#141a23"); g.addColorStop(1, "#0b0e13");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, Wd, H);
+  ctx.strokeStyle = "#54451f"; ctx.lineWidth = 3; ctx.strokeRect(14, 14, Wd - 28, H - 28);
+  ctx.fillStyle = "#f5b942"; ctx.font = "800 40px sans-serif";
+  ctx.fillText(t("share_title"), 56, 110);
+  ctx.fillStyle = "#8d9cae"; ctx.font = "24px sans-serif";
+  ctx.fillText((cur.chain === "xl"? "X Layer" : "BSC") + " · " + t("share_addr") + " …" + cur.addr.slice(-6).toUpperCase(), 56, 158);
+  ctx.fillStyle = "#e9eef4"; ctx.font = "800 60px sans-serif";
+  wrapText(ctx, verdictName(cur.verdict.displayKey), 56, 292, Wd - 112, 72);
+  if(cur.verdict.provisional){ ctx.fillStyle = "#f0cd7e"; ctx.font = "25px sans-serif"; ctx.fillText(t("prov_badge"), 56, 452); }
+  if(cur.verdict.srcDist){ ctx.fillStyle = "#a9c6f5"; ctx.font = "25px sans-serif"; ctx.fillText(t("parallel_lab") + ": " + verdictName("srcdist"), 56, 496); }
+  const s = cur.m.summary;
+  const rows = [
+    [t("r_machine_net"), s? fmtSignedWei(s.realizedProfitWei || "0", cur.unit) : "—"],
+    [t("r_comp_net"), cur.c.status === "ok"? fmtSignedWei(cur.c.netWei, cur.unit) : "—"],
+    [t("r_soft"), cur.o.softWei !== null? fmtWei(cur.o.softWei) + " " + cur.unit : (s? fmtWei(s.marketValueWei || "0") + " " + cur.unit : "—")]
+  ];
+  let y = 600;
+  rows.forEach(rw=>{
+    ctx.fillStyle = "#8d9cae"; ctx.font = "26px sans-serif"; ctx.fillText(rw[0], 56, y);
+    ctx.fillStyle = "#e9eef4"; ctx.font = "800 50px sans-serif"; ctx.fillText(rw[1], 56, y + 60);
+    y += 158;
+  });
+  ctx.fillStyle = "#647488"; ctx.font = "22px sans-serif";
+  ctx.fillText(t("share_date") + ": " + new Date().toISOString().slice(0, 10) + " · TapeOut Whale Ledger", 56, H - 64);
+  if(cv.toBlob){
+    cv.toBlob(b=>{
+      if(!b) return;
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(b);
+      a.download = "whale-ledger-" + cur.addr.slice(-6) + ".png";
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    });
+  }
+}
+</script>
+
+<script>
+"use strict";
+/* ============================== prices (BSC only) ============================== */
+let priceCache = {ts: 0, data: null};
+async function fetchPrices(){
+  if(priceCache.data && Date.now() - priceCache.ts < 300000) return priceCache.data;
+  const j = await apiGet(CH.bsc.base + "/v1/prices/bem");
+  const d = { bemUsd: Number(j.priceAtomic || 0) / 1e8, bnbUsd: (j.bnbUsd? Number(j.bnbUsd.priceAtomic || 0) / 1e8 : 0) };
+  priceCache = {ts: Date.now(), data: d};
+  return d;
+}
+
+/* ============================== snapshot: deduplicated loader ============================== */
+const snapStore = {}; // chain -> {ts, data, promise} — one in-flight pull per chain, 5-min cache
+function loadSnapshot(chain){
+  const ent = snapStore[chain];
+  const now = Date.now();
+  if(ent && ent.data && now - ent.ts < 300000) return Promise.resolve(ent.data);
+  if(ent && ent.promise) return ent.promise;
+  const promise = fetchSnapshot(chain).then(data=>{
+    snapStore[chain] = {ts: Date.now(), data, promise: null};
+    return data;
+  }).catch(e=>{
+    if(snapStore[chain]) snapStore[chain].promise = null;
+    throw e;
+  });
+  snapStore[chain] = {ts: ent? ent.ts : 0, data: ent? ent.data : null, promise};
+  return promise;
+}
+async function fetchSnapshot(chain){
+  const base = CH[chain].base;
+  let rows = [], scanned = 0, total = 0;
+  for(let p = 1; p <= 60; p++){
+    const j = await apiGet(base + "/v1/circuits?page=" + p);
+    if(j.total) total = j.total;
+    const arr = Array.isArray(j.rows)? j.rows : [];
+    scanned += arr.length;
+    for(const r of arr){
+      if(r.bestAsk && r.bestAsk.status === "open" && r.mining && r.mining.status === "verified"){
+        let out, cost;
+        try{ out = BigInt(r.mining.estimated24hAtomic || "0"); }catch(e){ continue; }
+        if(out <= 0n) continue;
+        try{ cost = BigInt(r.bestAsk.buyerCostWei || "0"); }catch(e){ continue; }
+        rows.push({cost, out});
+      }
+    }
+    const tp = j.totalPages || 0;
+    if(!arr.length || (tp && p >= tp)) break;
+  }
+  rows.sort((a, b)=>{ const l = a.cost * b.out, r = b.cost * a.out; return l < r? -1 : (l > r? 1 : 0); });
+  let totalAsk = 0n;
+  for(const r of rows) totalAsk += r.cost;
+  return {chain, rows, scanned, total, totalAskWei: totalAsk, at: Date.now()};
+}
+function capPriceNum(row){ return (Number(row.cost) / 1e18) / (Number(row.out) / 1e8); }
+
+/* ============================== simulator ============================== */
+let simChain = "bsc";
+let lastSim = null;
+function simCalc(snap, budgetWei){
+  let remaining = budgetWei, spent = 0n, out = 0n, count = 0;
+  for(const r of snap.rows){
+    if(remaining >= r.cost){ remaining -= r.cost; spent += r.cost; out += r.out; count++; }
+  }
+  return { count, spentWei: spent, outAtomic: out, dailyBem: Number(out) / 1e8,
+           exhausted: budgetWei > snap.totalAskWei,
+           share: snap.totalAskWei > 0n? ratioNum(budgetWei, snap.totalAskWei) : null };
+}
+function lightFor(chain, payback, share){
+  if(share === null) return null;
+  if(chain === "xl") return share <= 0.20? "g" : (share <= 0.50? "y" : "r"); // depth-share only, no price feed
+  if(payback === null) return null;
+  if(payback < 300 && share <= 0.20) return "g";
+  if(payback < 450 && share <= 0.50) return "y";
+  return "r";
+}
+function paybackFor(chain, snap, res, prices){
+  if(chain !== "bsc" || !prices || prices.bemUsd <= 0 || res.dailyBem <= 0) return null;
+  const costUsd = (Number(res.spentWei) / 1e18) * prices.bnbUsd;
+  return costUsd / (res.dailyBem * prices.bemUsd);
+}
+function showSimErr(){
+  const e = $("#simErr");
+  e.className = "errbox show src"; e.textContent = t("err_src");
+}
+function hideSimErr(){ const e = $("#simErr"); e.className = "errbox"; e.textContent = ""; }
+function renderSimStats(snap){
+  if(!snap || snap.chain !== simChain) return;
+  $("#simBody").style.display = "block";
+  const u = CH[simChain].unit;
+  $("#simBest").textContent = snap.rows.length? fmtNum(capPriceNum(snap.rows[0]), 4) + " " + u : "—";
+  $("#simCount").textContent = String(snap.rows.length);
+  $("#simCov").textContent = sepInt(String(snap.scanned)) + " / " + sepInt(String(snap.total || snap.scanned));
+  $("#simTotal").textContent = fmtWei(snap.totalAskWei) + " " + u;
+}
+async function loadSim(chain){
+  const prog = $("#simProg");
+  prog.innerHTML = '<span class="spin"></span>' + esc(t("sim_loading")) + "…";
+  hideSimErr();
+  try{
+    const snap = await loadSnapshot(chain);
+    lastSim = {chain, snap};
+    renderSimStats(snap);
+    prog.textContent = t("sim_loaded");
+    return snap;
+  }catch(e){
+    prog.textContent = "";
+    showSimErr();
+    return null;
+  }
+}
+function renderSimResult(snap, res, payback){
+  const u = CH[simChain].unit;
+  const ex = $("#simExhaust");
+  if(res.exhausted){
+    ex.className = "exhaust show";
+    ex.innerHTML = "<b>" + esc(t("exhaust_h")) + "</b> — " + esc(t("exhaust_msg"))
+      .replace("{X}", fmtWei(snap.totalAskWei) + " " + u)
+      .replace("{N}", String(res.count))
+      .replace("{Y}", fmtWei(res.spentWei) + " " + u);
+  } else { ex.className = "exhaust"; ex.innerHTML = ""; }
+  const blend = res.dailyBem > 0? fmtNum((Number(res.spentWei) / 1e18) / res.dailyBem, 4) + " " + u : "—";
+  $("#simResult").innerHTML =
+    '<div class="sim-grid" style="margin-top:14px">' +
+    '<div class="sim-stat"><div class="sk">' + esc(t("sim_machines")) + '</div><div class="sv num">' + res.count + "</div></div>" +
+    '<div class="sim-stat"><div class="sk">' + esc(t("sim_spent")) + '</div><div class="sv num">' + fmtWei(res.spentWei) + " " + u + "</div></div>" +
+    '<div class="sim-stat"><div class="sk">' + esc(t("sim_daily")) + '</div><div class="sv num">' + fmtNum(res.dailyBem, 2) + esc(t("sim_per_day")) + "</div></div>" +
+    '<div class="sim-stat"><div class="sk">' + esc(t("sim_blend")) + '</div><div class="sv num">' + blend + "</div></div>" +
+    '<div class="sim-stat"><div class="sk">' + esc(t("sim_payback")) + '</div><div class="sv num">' + (payback !== null? fmtNum(payback, 0) + esc(t("sim_days")) : "—") + "</div></div>" +
+    '<div class="sim-stat"><div class="sk">' + esc(t("shareof")) + '</div><div class="sv num">' + (res.share !== null? fmtNum(res.share * 100, 1) + "%" : "—") + "</div></div>" +
+    "</div>";
+  const light = lightFor(simChain, payback, res.share);
+  const el = $("#simLight");
+  if(light){
+    el.style.display = "inline-flex";
+    el.className = "light " + light;
+    $("#simLightTxt").textContent = simChain === "xl"? t("xl_light_note") : t(light === "g"? "light_g" : light === "y"? "light_y" : "light_r");
+  } else {
+    el.style.display = "inline-flex"; el.className = "light";
+    $("#simLightTxt").textContent = t("light_na");
+  }
+}
+async function runSimUI(){
+  let snap = (lastSim && lastSim.chain === simChain)? lastSim.snap : null;
+  if(!snap){ snap = await loadSim(simChain); if(!snap) return; }
+  const budgetWei = parseNativeToWei($("#simBudget").value || "0");
+  if(budgetWei === null) return;
+  const res = simCalc(snap, budgetWei);
+  let prices = null;
+  if(simChain === "bsc"){ try{ prices = await fetchPrices(); }catch(e){ prices = null; } }
+  renderSimResult(snap, res, paybackFor(simChain, snap, res, prices));
+}
+function setSimChain(ch){
+  simChain = ch;
+  $$("#simChainSeg button").forEach(x=>x.classList.toggle("on", x.getAttribute("data-chain") === ch));
+  $("#simUnit").textContent = CH[ch].unit;
+  const ent = snapStore[ch];
+  if(ent && ent.data){ lastSim = {chain: ch, snap: ent.data}; renderSimStats(ent.data); }
+}
+$$("#simChainSeg button").forEach(b=> b.addEventListener("click", ()=> setSimChain(b.getAttribute("data-chain"))));
+$("#simLoadBtn").addEventListener("click", ()=> loadSim(simChain));
+$("#simRunBtn").addEventListener("click", runSimUI);
+
+/* ============================== dual-chain strip ============================== */
+const STRIP_PRESET = {bsc: 10, xl: 20};
+function renderStripCard(ch, state, snap, res, payback){
+  const el = document.getElementById("strip-" + ch); if(!el) return;
+  const unit = CH[ch].unit;
+  const title = ch === "bsc"? "BSC · BEM" : "X Layer · FAB";
+  if(state === "loading"){
+    el.innerHTML = "<h3>" + title + '</h3><div class="loadrow"><span class="spin"></span>' + esc(t("strip_loading")) + "</div>";
+    return;
+  }
+  if(state === "fail"){
+    el.innerHTML = "<h3>" + title + '</h3><div class="loadrow">' + esc(t("strip_fail")) + "</div>";
+    return;
+  }
+  const light = lightFor(ch, payback, res.share);
+  let h = "<h3>" + title + (light? ' <span class="light ' + light + '"><span class="bulb"></span></span>' : "") + "</h3>";
+  h += '<div class="srow">' +
+    '<div class="sstat"><div class="sk">' + esc(t("sim_best")) + '</div><div class="sv num">' + (snap.rows.length? fmtNum(capPriceNum(snap.rows[0]), 4) + " " + unit : "—") + "</div></div>" +
+    '<div class="sstat"><div class="sk">' + esc(t("sim_count")) + '</div><div class="sv num">' + snap.rows.length + "</div></div>" +
+    '<div class="sstat"><div class="sk">' + esc(t("sim_payback")) + '</div><div class="sv num">' + (payback !== null? fmtNum(payback, 0) + esc(t("sim_days")) : "—") + "</div></div>" +
+    "</div>";
+  h += '<div class="sfoot"><span style="color:var(--mut);font-size:13px">' + esc(t("strip_preset")) + ": <b>" + STRIP_PRESET[ch] + " " + unit + "</b> · " + esc(t("shareof")) + " " + (res.share !== null? fmtNum(res.share * 100, 1) + "%" : "—") + "</span>" +
+    '<button class="goldbtn" style="padding:8px 16px;font-size:13.5px" data-open-sim="' + ch + '">' + esc(t("strip_open")) + "</button></div>";
+  if(ch === "xl") h += '<div class="snote">' + esc(t("xl_light_note")) + "</div>";
+  el.innerHTML = h;
+}
+async function initStrip(){
+  ["bsc", "xl"].forEach(ch=> renderStripCard(ch, "loading"));
+  for(const ch of ["bsc", "xl"]){
+    try{
+      const snap = await loadSnapshot(ch);
+      const res = simCalc(snap, parseNativeToWei(String(STRIP_PRESET[ch])));
+      let prices = null;
+      if(ch === "bsc"){ try{ prices = await fetchPrices(); }catch(e){ prices = null; } }
+      renderStripCard(ch, "ok", snap, res, paybackFor(ch, snap, res, prices));
+    }catch(e){ renderStripCard(ch, "fail"); }
+  }
+}
+$("#stripSec").addEventListener("click", async e=>{
+  const b = e.target.closest? e.target.closest("[data-open-sim]") : null;
+  if(!b) return;
+  const ch = b.getAttribute("data-open-sim");
+  setSimChain(ch);
+  $("#simBudget").value = String(STRIP_PRESET[ch]);
+  document.getElementById("simSec").scrollIntoView({behavior: "smooth"});
+  const snap = await loadSim(ch);
+  if(snap) runSimUI();
+});
+
+/* ============================== watchlist rendering ============================== */
+function renderWatchlist(){
+  const panel = $("#wlPanel"); if(!panel) return;
+  const wl = wlLoad();
+  if(!wl.length){ panel.innerHTML = '<div class="wl-empty">' + esc(t("wl_empty")) + "</div>"; return; }
+  panel.innerHTML = wl.slice().sort((a, b)=> b.ts - a.ts).map(en=>
+    '<div class="wl-item"><span class="tag">' + (en.chain === "xl"? "XL" : "BSC") + "</span>" +
+    '<span class="wa">' + esc(shortAddr(en.addr)) + "</span>" +
+    '<span class="wv">' + esc(verdictName(en.vkey)) + "</span>" +
+    '<span class="wt">' + new Date(en.ts).toLocaleString() + "</span>" +
+    '<button data-wl-go="' + esc(en.chain) + ":" + esc(en.addr) + '" title="re-run">↻</button>' +
+    '<button data-wl-del="' + esc(en.chain) + ":" + esc(en.addr) + '">✕</button></div>'
+  ).join("");
+}
+$("#wlPanel").addEventListener("click", e=>{
+  const del = e.target.closest? e.target.closest("[data-wl-del]") : null;
+  if(del){
+    const parts = del.getAttribute("data-wl-del").split(":");
+    wlSave(wlLoad().filter(x=> !(x.chain === parts[0] && x.addr === parts[1])));
+    renderWatchlist();
+    return;
+  }
+  const go = e.target.closest? e.target.closest("[data-wl-go]") : null;
+  if(go){
+    const parts = go.getAttribute("data-wl-go").split(":");
+    lookupChain = parts[0];
+    $$("#chainSeg button").forEach(x=>x.classList.toggle("on", x.getAttribute("data-chain") === lookupChain));
+    $("#addrInput").value = parts[1];
+    document.getElementById("lookupSec").scrollIntoView({behavior: "smooth"});
+    doLookup();
+  }
+});
+
+/* ============================== init ============================== */
+applyLang();
+checkHealth();
+setInterval(checkHealth, 120000);
+loadCases();
+if(document.readyState === "complete") setTimeout(initStrip, 900);
+else window.addEventListener("load", ()=> setTimeout(initStrip, 900));
+</script>
+</body>
+</html>
