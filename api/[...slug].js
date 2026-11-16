@@ -125,8 +125,31 @@ module.exports = async function handler(req, res) {
       else keptParts.push(kv);
     }
     if (pVal !== null) {
-      upstreamPath = '/' + decodeURIComponent(pVal);
-      fwdSearch = keptParts.length ? '?' + keptParts.join('&') : '';
+      // Vercel appends the original query string after the destination's,
+      // so __p can arrive as "v1/.../circuit-trades?limit=100" with limit
+      // repeated as a separate part. The real path never contains ? or #:
+      // cut there, treat the tail as duplicate params, and let the clean
+      // separate parts win on any key conflict.
+      let rawP = pVal;
+      let tail = '';
+      const qIdx2 = rawP.indexOf('?');
+      if (qIdx2 >= 0) {
+        tail = rawP.slice(qIdx2 + 1);
+        rawP = rawP.slice(0, qIdx2);
+      }
+      upstreamPath = '/' + decodeURIComponent(rawP);
+      const merged = new Map();
+      const addPairs = (s) => {
+        for (const kv of s.split('&').filter(Boolean)) {
+          const eq = kv.indexOf('=');
+          const key = eq >= 0 ? kv.slice(0, eq) : kv;
+          if (!merged.has(key)) merged.set(key, kv);
+        }
+      };
+      addPairs(keptParts.join('&'));
+      if (tail) addPairs(tail);
+      const qs = [...merged.values()].join('&');
+      fwdSearch = qs ? '?' + qs : '';
     }
     const url = `${UPSTREAMS[m[1]]}${upstreamPath}${fwdSearch}`;
     const ctrl = new AbortController();
