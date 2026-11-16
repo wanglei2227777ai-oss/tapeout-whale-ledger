@@ -152,6 +152,8 @@ module.exports = async function handler(req, res) {
       fwdSearch = qs ? '?' + qs : '';
     }
     const url = `${UPSTREAMS[m[1]]}${upstreamPath}${fwdSearch}`;
+    res.setHeader('x-debug-requrl', rawUrl);
+    res.setHeader('x-debug-upstream', url);
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), UPSTREAM_TIMEOUT_MS);
     try {
