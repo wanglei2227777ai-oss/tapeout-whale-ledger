@@ -1,0 +1,15 @@
+# Secrets and local config — never commit
+.env
+.env.*
+
+# Dependencies and logs
+node_modules/
+*.log
+npm-debug.log*
+
+# Locally generated data products (claims precompute table, mint scans)
+claims-table*.json
+mint-scan/
+
+# OS noise
+.DS_Store

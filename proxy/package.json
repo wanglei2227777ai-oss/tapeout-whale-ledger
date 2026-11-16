@@ -1,0 +1,1 @@
+{"description":"Thin read-only proxy for the TapeOut Whale Ledger public deployment: forwards the Firsto BSC / X Layer APIs with per-IP rate limiting and a preheated anonymized-case cache.","engines":{"node":">=18"},"license":"MIT","main":"server.js","name":"tapeout-whale-ledger-proxy","private":true,"scripts":{"start":"node server.js"},"version":"1.0.0"}
